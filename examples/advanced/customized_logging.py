@@ -21,7 +21,7 @@ from relai.utils import log_model
 
 
 @simulated
-async def get_user_input(agent_response: str = None):
+async def get_user_input(agent_response: str | None = None):
     msg = input("User: ")
     return msg
 
@@ -72,6 +72,7 @@ async def chat_agent(messages: list[dict]):
 async def agent_fn(tape: SimulationTape):
     input = await get_user_input()
     messages = [{"role": "user", "content": input}]
+    response = ""
     while "[GOOD]" not in input and "[BAD]" not in input:
         print("User:", input)  # Debug print
         tape.agent_inputs["user_text"] = input  # trace inputs for later auditing
