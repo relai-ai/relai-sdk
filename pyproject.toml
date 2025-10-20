@@ -13,7 +13,7 @@ description = "An SDK for building reliable AI agents"
 readme = "README.md"
 license = {file = "LICENSE.md" }
 classifiers = [
-  "License :: Other/Proprietary License",
+  "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -30,7 +30,7 @@ dependencies = [
     "opentelemetry-instrumentation>=0.58b0",
     "openinference-instrumentation>=0.1.38",
 ]
-version = "0.3.0"
+version = "0.3.2"
 
 [tool.setuptools.packages.find]
 where = ["."]

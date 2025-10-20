@@ -1,39 +1,75 @@
-name: Build and Upload Python Package to RELAI Package Index
+name: Build, Release, and Publish to PyPI
 
 permissions:
   contents: write
+  id-token: write
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/relai/
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'  # Agent service uses Python 3.12, we might have to add other versions as well
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-    # Step 3: Install Poetry
-    - name: Install build tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
 
-    # Step 4: Build the package
-    - name: Build the package
-      run: |
-        python -m build
+      - name: Build the package
+        run: python -m build
 
-    # Step 5: Upload the package to RELAI private PyPI
-    - name: Upload to RELAI PyPI
-      run: |
-        python -m twine upload --repository-url ${{ secrets.RELAI_PYPI_URL }} -u ${{ secrets.RELAI_PYPI_USERNAME }} -p ${{ secrets.RELAI_PYPI_PASSWORD }} dist/*
+      - name: Read version from pyproject.toml
+        id: get_version
+        run: |
+          python - <<'PY'
+          import sys, pathlib
+          import tomllib
+          data = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
+          v = data.get("project", {}).get("version")
+          if not v:
+              raise SystemExit("No [project].version found in pyproject.toml")
+          print(f"VERSION={v}")
+          PY
+        shell: bash
+      - name: Export VERSION
+        run: |
+          VERSION=$(python - <<'PY'
+          import pathlib, tomllib
+          d = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
+          print(d["project"]["version"])
+          PY
+          )
+          echo "VERSION=$VERSION" | tee -a "$GITHUB_ENV"
+
+      - name: Create GitHub Release and upload build artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          generate_release_notes: true
+          files: |
+            dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true

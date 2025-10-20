@@ -1,0 +1,49 @@
+name: Check Version Bump
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  check-version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the PR code
+        uses: actions/checkout@v4
+        with:
+          # We need the full commit history to compare
+          fetch-depth: 0
+
+      - name: Get base version (from main)
+        run: |
+          # Fetch the latest commits from the base branch
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          # Extract the version from pyproject.toml in the base branch
+          BASE_VERSION=$(git show origin/${{ github.event.pull_request.base.ref }}:pyproject.toml | grep '^version *= *"[^"]*' | sed 's/^version *= *"\([^"]*\)"/\1/')
+          echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_ENV
+
+      - name: Get head version (from the PR)
+        run: |
+          # Extract the version from the current pyproject.toml in the PR
+          HEAD_VERSION=$(grep '^version *= *"[^"]*' pyproject.toml | sed 's/^version *= *"\([^"]*\)"/\1/')
+          echo "HEAD_VERSION=$HEAD_VERSION" >> $GITHUB_ENV
+
+
+      - name: Compare versions
+        run: |
+          echo "Base version is: $BASE_VERSION"
+          echo "PR version is: $HEAD_VERSION"
+
+          if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
+            echo "❌ The version in pyproject.toml has not been bumped!"
+            exit 1
+          else
+            echo "✅ The version has been bumped!"
+          fi
+        env:
+          BASE_VERSION: ${{ env.BASE_VERSION }}
+          HEAD_VERSION: ${{ env.HEAD_VERSION }}
