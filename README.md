@@ -34,32 +34,39 @@ export RELAI_API_KEY="<RELAI_API_KEY>"
 ```
 
 ### Example (Simulate → Evaluate → Optimize)
-Prerequisites: Needs an OpenAI API key and `openai-agents` installed
+Prerequisites: Needs an OpenAI API key and `openai-agents` installed.
+To use Maestro graph optimizer, save the following in a file called `stock-assistant.py` (or change the `code_paths` argument to `maestro.optimize_structure`).
 ```python
+# ============================================================================
+# STEP 0 — Prerequisites
+# ============================================================================
 # export OPENAI_API_KEY="sk-..."
-# uv add openai-agents
+# `uv add openai-agents`
+# export RELAI_API_KEY="relai-..."
+# Save as `stock-assistant.py`
+
 import asyncio
-import re
 
 from agents import Agent, Runner
 
 from relai import (
-    AgentLog,
     AgentOutputs,
     AsyncRELAI,
     AsyncSimulator,
-    EvaluatorLog,
     SimulationTape,
     random_env_generator,
 )
 from relai.critico import Critico
-from relai.critico.evaluate import Evaluator
+from relai.critico.evaluate import RELAIFormatEvaluator
 from relai.maestro import Maestro, params, register_param
 from relai.mocker import Persona
 from relai.simulator import simulated
 
+# ============================================================================
+# STEP 1.1 — Decorate inputs/tools that will be simulated
+# ============================================================================
 
-# Decorate inputs/tools that will be simulated
+
 @simulated
 async def get_user_query() -> str:
     """Get user's query about stock prices."""
@@ -67,7 +74,10 @@ async def get_user_query() -> str:
     return input("Enter you stock query: ")
 
 
-# Register parameters for optimization
+# ============================================================================
+# STEP 1.2 — Register parameters for optimization
+# ============================================================================
+
 register_param(
     "prompt",
     type="prompt",
@@ -75,32 +85,22 @@ register_param(
     desc="system prompt for the agent",
 )
 
+# ============================================================================
+# STEP 2 — Your agent core
+# ============================================================================
+
+
 async def agent_fn(tape: SimulationTape) -> AgentOutputs:
     question = await get_user_query()
     agent = Agent(
-        name="Stock Chatbot",
+        name="Stock assistant",
         instructions=params.prompt,  # access registered parameter
         model="gpt-5-mini",
     )
     result = await Runner.run(agent, question)
+    tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)"}
     tape.agent_inputs["question"] = question  # trace inputs for later auditing
-    return {"answer": result.final_output}
-
-
-class PriceFormatEvaluator(Evaluator):
-    """An illustrative evaluator that checks for correct price formats in the agent's answer."""
-
-    def __init__(self) -> None:
-        super().__init__(name="PriceFormatEvaluator", required_fields=["answer"])
-
-    async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:
-        bad_pattern = r"\$(?!\d{1,3}(?:,\d{3})+|\d+\.\d{2}\b)\S+"
-        bad_prices = re.findall(bad_pattern, agent_log.agent_outputs["answer"])
-        score = 0.0 if bad_prices else 1.0
-        feedback = (
-            ("Incorrect price formats found: " + ", ".join(bad_prices)) if bad_prices else "Price formats look good."
-        )
-        return EvaluatorLog(evaluator_id=self.uid, name=self.name, outputs={"score": score, "feedback": feedback})
+    return {"summary": result.final_output}
 
 
 async def main() -> None:
@@ -113,23 +113,30 @@ async def main() -> None:
     )
 
     async with AsyncRELAI() as client:
-        # Simulate
+        # ============================================================================
+        # STEP 3 — Simulate
+        # ============================================================================
         simulator = AsyncSimulator(agent_fn=agent_fn, env_generator=env_generator, client=client)
         agent_logs = await simulator.run(num_runs=1)
 
-        # Evaluate with Critico
+        # ============================================================================
+        # STEP 4 — Evaluate with Critico
+        # ============================================================================
         critico = Critico(client=client)
-        critico.add_evaluators({PriceFormatEvaluator(): 1.0})
+        format_evaluator = RELAIFormatEvaluator(client=client)
+        critico.add_evaluators({format_evaluator: 1.0})
         critico_logs = await critico.evaluate(agent_logs)
 
         # Publish evaluation report to the RELAI platform
         await critico.report(critico_logs)
 
-        # Optimize with Maestro
-        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Stock Chatbot")
+        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Stock assistant")
         maestro.add_setup(simulator=simulator, critico=critico)
 
-        # Optimize agent configurations (the parameters registered earlier in STEP 2)
+        # ============================================================================
+        # STEP 5.1 — Optimize configs with Maestro (the parameters registered earlier in STEP 2)
+        # ============================================================================
+
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=50,  # Total number of rollouts to use for optimization.
@@ -140,16 +147,20 @@ async def main() -> None:
         )
         params.save("saved_config.json")  # save optimized params for future usage
 
-        # Optimize agent structure (changes that cannot be achieved by setting parameters alone)
+        # ============================================================================
+        # STEP 5.2 — Optimize agent structure with Maestro (changes that cannot be achieved by setting parameters alone)
+        # ============================================================================
+
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["agentic-rag.py"],  # A list of paths corresponding to code implementations of the agent.
+            code_paths=["stock-assistant.py"],  # A list of paths corresponding to code implementations of the agent.
             verbose=True,  # If True, related information will be printed during the optimization step.
         )
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 ```
 ## Simulation
 Create controlled environments where agents interact and generate traces. Compose LLM personas, mock MCP tools/servers, and synthetic data; optionally condition on real events to align simulation ⇄ production.
