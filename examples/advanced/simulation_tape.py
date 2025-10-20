@@ -63,6 +63,7 @@ async def agent_fn(tape: SimulationTape):
 
     input = await get_user_input()
     messages = [{"role": "user", "content": input}]
+    response = ""
     while "[GOOD]" not in input and "[BAD]" not in input:
         print("User:", input)  # Debug print
         tape.agent_inputs["user_text"] = input  # trace inputs for later auditing
