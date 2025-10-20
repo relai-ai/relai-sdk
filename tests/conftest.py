@@ -6,9 +6,9 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
+from relai.critico.benchmark import AgentResponse, Sample
 
 from relai import AsyncRELAI
-from relai.critico.benchmark import AgentResponse, Sample
 
 
 @pytest.fixture(scope="function")
