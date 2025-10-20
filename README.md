@@ -15,9 +15,9 @@
 **RELAI** is an SDK for building **reliable AI agents**. It streamlines the hardest parts of agent development—**simulation**, **evaluation**, and **optimization**—so you can iterate quickly with confidence.
 
 **What you get**
-- **Agent Simulation** — Create full/partial environments, define **LLM personas**, mock **MCP** servers & tools, and generate **synthetic data**. Optionally **condition simulation on real samples** to better match production.
-- **Agent Evaluation** — Mix **code-based** and **LLM-based** custom evaluators or use **RELAI platform evaluators**. Turn human reviews into **benchmarks** you can re-run.
-- **Agent Optimization (Maestro)** — Holistic optimizer that uses evaluator signals & feedback to improve prompts/configs **and** suggest **graph-level** changes. Also selects **best model/tool/graph** based on observed performance.
+- **Agent Simulation** — Create full/partial environments, define LLM personas, mock MCP servers & tools, and generate synthetic data. Optionally condition simulation on real samples to better match production.
+- **Agent Evaluation** — Mix code-based and LLM-based custom evaluators or use RELAI platform evaluators. Turn human reviews into benchmarks you can re-run.
+- **Agent Optimization (Maestro)** — Holistic optimizer that uses evaluator signals & feedback to improve **prompts/configs** and suggest **graph-level** changes. Maestro selects best model/tool/graph based on observed performance.
 
 ## Quickstart
 
@@ -33,8 +33,8 @@ uv add relai
 export RELAI_API_KEY="<RELAI_API_KEY>"
 ```
 
-### Example (Simulate → Evaluate → Optimize)
-Prerequisites: Needs an OpenAI API key and `openai-agents` installed.
+### Example: A simple Stock Assistant Agent (Simulate → Evaluate → Optimize) 
+Prerequisites: Needs an OpenAI API key and `openai-agents` installed to run the base agent.
 To use Maestro graph optimizer, save the following in a file called `stock-assistant.py` (or change the `code_paths` argument to `maestro.optimize_structure`).
 ```python
 # ============================================================================
