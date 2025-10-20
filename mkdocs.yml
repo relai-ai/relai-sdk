@@ -121,6 +121,8 @@ extra:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Tutorials:
+      - Custom Evaluator: tutorials/custom-evaluator.md
   - API Reference:
       - Types: types.md
       - Benchmark: benchmark.md
