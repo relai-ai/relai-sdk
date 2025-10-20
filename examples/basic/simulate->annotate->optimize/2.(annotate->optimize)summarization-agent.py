@@ -10,11 +10,11 @@ from relai import AsyncRELAI, simulated
 from relai.benchmark import RELAIAnnotationBenchmark
 from relai.critico import Critico
 from relai.critico.evaluate import RELAIAnnotationEvaluator
-from relai.data import SimulationTape
+from relai.data import RELAISample, SimulationTape
 from relai.logger import tracer_provider
 from relai.maestro import Maestro, params, register_param
-from relai.mocker.persona import Persona, PersonaSet
-from relai.simulator import AsyncSimulator, random_env_generator
+from relai.mocker.persona import Persona
+from relai.simulator import AsyncSimulator
 
 OpenAIAgentsInstrumentor().instrument(tracer_provider=tracer_provider)
 
@@ -48,24 +48,33 @@ async def agent_fn(tape: SimulationTape):
     response = await summarization_agent(input)
     return {"response": response}
 
+
 # ============================================================================
 # STEP 5 — Simulate->Evalaute->Optimize with annotation benchmark
 # ============================================================================
 # 5.1 — Load your annotation benchmark created in STEP 4.3 of
 # `1.(simulate->annotate)summarization-agent.py`
-benchmark = RELAIAnnotationBenchmark(benchmark_id="benchmark ID for your annotation benchmark") # replace with your benchmark ID
+benchmark = RELAIAnnotationBenchmark(
+    benchmark_id="benchmark ID for your annotation benchmark"
+)  # replace with your benchmark ID
 for sample in benchmark.samples:
-    print(sample) # inspect loaded benchmark samples
+    print(sample)  # inspect loaded benchmark samples
+
 
 # 5.2 — Set up a environment generator that customizes simulation configs based
 # on the benchmark samples
-def custom_env_generator(sample):
+def custom_env_generator(sample: RELAISample | None = None):
+    if not sample:
+        return {}
     return {
         "__main__.get_user_input": Persona(
             user_persona=sample.extras["simulation_config"]["__main__.get_user_input"]["user_persona"],
-            starting_message=sample.agent_inputs["all_inputs"]["user_text"], # provide the original user input recorded
+            starting_message=sample.agent_inputs["all_inputs"][
+                "user_text"
+            ],  # provide the original user input recorded
         )
     }
+
 
 async def main():
     async with AsyncRELAI() as client:
@@ -73,14 +82,14 @@ async def main():
         simulator = AsyncSimulator(
             client=client,
             agent_fn=agent_fn,
-            env_generator=custom_env_generator, # use custom env generator
-            benchmark=benchmark, # use the annotation benchmark for simulation
+            env_generator=custom_env_generator,  # use custom env generator
+            benchmark=benchmark,  # use the annotation benchmark for simulation
             log_runs=True,
         )
 
         # 5.4 — Set up Critico with RELAIAnnotationEvaluator for automatic evaluation of annotation benchmarks
         critico = Critico(client=client)
-        critico.add_evaluators(evaluators={RELAIAnnotationEvaluator(client=client):1})
+        critico.add_evaluators(evaluators={RELAIAnnotationEvaluator(client=client): 1})
 
         # 5.5 — OPTIMIZE with Maestro
         maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Summarization Agent")
@@ -100,8 +109,11 @@ async def main():
         # 5.5.2 — Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["2.(annotate->optimize)summarization-agent.py"],  # A list of paths corresponding to code implementations of the agent.
+            code_paths=[
+                "2.(annotate->optimize)summarization-agent.py"
+            ],  # A list of paths corresponding to code implementations of the agent.
             verbose=True,  # If True, related information will be printed during the optimization step.
         )
+
 
 asyncio.run(main())

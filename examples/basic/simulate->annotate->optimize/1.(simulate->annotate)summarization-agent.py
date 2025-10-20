@@ -10,13 +10,10 @@ from agents import Agent, Runner
 from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
 
 from relai import AsyncRELAI, simulated
-from relai.benchmark import RELAIAnnotationBenchmark
-from relai.critico import Critico
-from relai.critico.evaluate import RELAIAnnotationEvaluator
 from relai.data import SimulationTape
 from relai.logger import tracer_provider
-from relai.maestro import Maestro, params, register_param
-from relai.mocker.persona import Persona, PersonaSet
+from relai.maestro import params, register_param
+from relai.mocker.persona import Persona
 from relai.simulator import AsyncSimulator, random_env_generator
 
 # ---- Observability (optional but recommended) -------------------------------
@@ -26,6 +23,7 @@ OpenAIAgentsInstrumentor().instrument(tracer_provider=tracer_provider)
 # ============================================================================
 # STEP 1 — Decorate inputs/tools that will be simulated
 # ============================================================================
+
 
 @simulated
 async def get_user_input():
@@ -72,14 +70,19 @@ async def agent_fn(tape: SimulationTape):
 # STEP 4 — Simulate
 # ============================================================================
 
+
 async def main():
     # 4.1 — Set up your simulation environment
     # Bind Personas/MockTools to fully-qualified function names
     env_generator = random_env_generator(
-        {"__main__.get_user_input": [
-            Persona(user_persona="You have a piece of news to summarize. Include that as part of your message."),
-            Persona(user_persona="You have a piece of article to summarize. Include that as part of your message."),
-        ]}
+        {
+            "__main__.get_user_input": [
+                Persona(user_persona="You have a piece of news to summarize. Include that as part of your message."),
+                Persona(
+                    user_persona="You have a piece of article to summarize. Include that as part of your message."
+                ),
+            ]
+        }
         # Alternatively, set up a Persona Set through RELAI platform (platform.relai.ai) and use the code below:
         # {"__main__.get_user_input": PersonaSet(persona_set_id="your_persona_set_id_here")}
     )
@@ -97,8 +100,8 @@ async def main():
         print(agent_logs)
 
     # 4.3 — ANNOTATE
-    # Go to RELAI platform (platform.relai.ai) under ->Results->Runs, 
-    # click on individual runs to: 
+    # Go to RELAI platform (platform.relai.ai) under ->Results->Runs,
+    # click on individual runs to:
     # 1. view and provide feedback to the simulation runs you just executed
     # 2. create an Annotation Benchmark from these runs for future optimization
     #    with the "Add to Benchmark" button at the bottom.

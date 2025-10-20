@@ -36,6 +36,7 @@ MODEL = "gpt-5-mini"  # swap as needed
 # STEP 1 — Decorate inputs/tools that will be simulated
 # ============================================================================
 
+
 @simulated
 async def get_user_query() -> str:
     """Get user's query about stock prices."""
@@ -90,6 +91,7 @@ async def stock_price_chatbot(question: str) -> dict[str, str]:
 # STEP 3 — Wrap agent for simulation traces
 # ============================================================================
 
+
 async def agent_fn(tape: SimulationTape) -> AgentOutputs:
     question = await get_user_query()
     tape.agent_inputs["question"] = question  # trace inputs for later auditing
@@ -99,6 +101,7 @@ async def agent_fn(tape: SimulationTape) -> AgentOutputs:
 # ============================================================================
 # STEP 4 — Define evaluators (Critico)
 # ============================================================================
+
 
 class PriceFormatEvaluator(Evaluator):
     """An illustrative evaluator that checks for correct price formats in the agent's answer."""
@@ -122,6 +125,7 @@ class PriceFormatEvaluator(Evaluator):
 # ============================================================================
 # STEP 5 — Orchestrate: simulate → evaluate →  optimize
 # ============================================================================
+
 
 async def main() -> None:
     # 5.1 — Set up your simulation environment
