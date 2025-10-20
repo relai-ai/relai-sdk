@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "relai"
 requires-python = ">=3.9"
 authors = [
-    {name = "RELAI", email = "support@relai.ai"},
+    {name = "RELAI", email = "priyatham@relai.ai"},
+    {name = "RELAI", email = "wwx@relai.ai"},
 ]
 description = "An SDK for building reliable AI agents"
 readme = "README.md"
