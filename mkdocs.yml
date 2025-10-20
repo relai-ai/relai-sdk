@@ -33,6 +33,7 @@ theme:
     - navigation.instant.prefetch
     - navigation.path
     - navigation.sections
+    - navigation.indexes
     - navigation.top
     - navigation.tracking
     - search.suggest
@@ -122,14 +123,17 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Tutorials:
+      - tutorials/index.md
+      - Persona Set: tutorials/persona-set.md
       - Custom Evaluator: tutorials/custom-evaluator.md
   - API Reference:
-      - Types: types.md
-      - Benchmark: benchmark.md
-      - Mockers: mockers.md
-      - Simulator: simulator.md
-      - Evaluator: evaluator.md
-      - Critico: critico.md
-      - Maestro: maestro.md
+      - api/index.md
+      - Types: api/types.md
+      - Benchmark: api/benchmark.md
+      - Mockers: api/mockers.md
+      - Simulator: api/simulator.md
+      - Evaluator: api/evaluator.md
+      - Critico: api/critico.md
+      - Maestro: api/maestro.md
 
 docs_dir: docs
