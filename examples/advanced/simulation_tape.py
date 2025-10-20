@@ -22,7 +22,7 @@ from relai.utils import log_model
 
 
 @simulated
-async def get_user_input(agent_response: str = None):
+async def get_user_input(agent_response: str | None = None):
     msg = input("User: ")
     return msg
 
@@ -42,7 +42,7 @@ async def chat_agent(messages: list[dict]):
         model=params.model,
         system_prompt=params.prompt,
     )
-    response = agent.invoke({"messages": messages})
+    response = agent.invoke({"messages": messages})  # type: ignore
 
     response = response["messages"][-1].content
 

@@ -43,7 +43,7 @@ async def chat_agent(messages: list[dict]):
         model=params.model,
         system_prompt=params.prompt,
     )
-    response = agent.invoke({"messages": messages})
+    response = agent.invoke({"messages": messages})  # type: ignore
 
     response = response["messages"][-1].content
 
