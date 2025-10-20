@@ -1,7 +1,7 @@
 # ------------------------------------------------------------
 # Prereqs:
 #   export GEMINI_API_KEY="AI..."          # if your agent/tool uses Gemini
-#   pip install relai-sdk                  # relai
+#   pip install relai                  # relai
 
 import asyncio
 
