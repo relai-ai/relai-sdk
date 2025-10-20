@@ -94,6 +94,9 @@ async def main():
         # 5.5 — OPTIMIZE with Maestro
         maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Summarization Agent")
         maestro.add_setup(simulator=simulator, critico=critico)
+        # one can use multiple simulator+critico setups with different weights by calling `add_setup` multiple times
+        # maestro.add_setup(simulator=simulator, critico=critico, weight = 1) 
+        # maestro.add_setup(simulator=another_simulator, critico=another_critico, weight = 0.5)
 
         # 5.5.1 — Optimize agent configurations (the parameters registered earlier in STEP 2)
         # params.load("saved_config.json")  # load previous params if available

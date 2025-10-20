@@ -31,8 +31,11 @@ def flatten(mapping: Mapping[str, Any]) -> Iterator[tuple[str, AttributeValue]]:
                 yield f"{key}.{sub_key}", sub_value
         elif isinstance(value, list) and any(isinstance(item, Mapping) for item in value):
             for index, sub_mapping in enumerate(value):
-                for sub_key, sub_value in flatten(sub_mapping):
-                    yield f"{key}.{index}.{sub_key}", sub_value
+                if isinstance(sub_mapping, Mapping):
+                    for sub_key, sub_value in flatten(sub_mapping):
+                        yield f"{key}.{index}.{sub_key}", sub_value
+                else:
+                    yield f"{key}.{index}", sub_mapping
         else:
             if isinstance(value, Enum):
                 value = value.value
