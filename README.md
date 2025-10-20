@@ -98,7 +98,7 @@ async def agent_fn(tape: SimulationTape) -> AgentOutputs:
         model="gpt-5-mini",
     )
     result = await Runner.run(agent, question)
-    tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)"}
+    tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)": 1.0}
     tape.agent_inputs["question"] = question  # trace inputs for later auditing
     return {"summary": result.final_output}
 
@@ -139,9 +139,9 @@ async def main() -> None:
 
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
-            total_rollouts=50,  # Total number of rollouts to use for optimization.
-            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
-            explore_radius=5,  # A positive integer controlling the aggressiveness of exploration during optimization.
+            total_rollouts=80,  # Total number of rollouts to use for optimization.
+            batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            explore_radius=3,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
             verbose=True,  # If True, related information will be printed during the optimization step.
         )
