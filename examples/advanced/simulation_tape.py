@@ -75,8 +75,8 @@ async def agent_fn(tape: SimulationTape):
         messages.extend([{"role": "assistant", "content": response}, {"role": "user", "content": input}])
 
     # ============================================================================
-    # Step 1: Use simulation tape to record any additional information for 
-    # evaluation. Here we record the full conversation trajectory, and also the 
+    # Step 1: Use simulation tape to record any additional information for
+    # evaluation. Here we record the full conversation trajectory, and also the
     # total time taken by the agent to respond.
     # ============================================================================
     tape.add_record("conversation", messages)  # record full trajectory in tape for evaluation
@@ -130,7 +130,7 @@ class ConversationEvaluator(Evaluator):
             feedback = "The agent could do better."
         else:
             raise ValueError("Final user message should contain either [GOOD] or [BAD].")
-        
+
         # Step 2: Utilize the recorded total response time for additional evaluation
         if total_response_time > 10:
             score -= 0.1  # penalize for long response time

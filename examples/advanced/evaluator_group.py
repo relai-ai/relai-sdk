@@ -23,7 +23,7 @@ from relai.utils import log_model
 
 
 @simulated
-async def get_user_input(agent_response: str = None):
+async def get_user_input(agent_response: str | None = None):
     msg = input("User: ")
     return msg
 
@@ -63,6 +63,7 @@ async def agent_fn(tape: SimulationTape):
     total_response_time = 0
 
     input = await get_user_input()
+    response = ""
     messages = [{"role": "user", "content": input}]
     while "[GOOD]" not in input and "[BAD]" not in input:
         print("User:", input)  # Debug print
@@ -91,7 +92,7 @@ class ConversationEvaluator(Evaluator):
     A custom evaluator for a conversation.
     """
 
-    def __init__(self, transform: Callable | None = None, mode: str = Literal["rigid", "lenient"]):
+    def __init__(self, transform: Callable | None = None, mode: Literal["rigid", "lenient"] = "rigid"):
         """
         Initialize the custom sentiment evaluator.
 
@@ -127,7 +128,7 @@ class ConversationEvaluator(Evaluator):
             score = 1.0
             feedback = "The agent was helpful."
         elif "[BAD]" in final_user_message:
-            score = 0.0 if self.mode == "rigid" else 0.5
+            score = 0.0 if self.hyperparameters["mode"] == "rigid" else 0.5
             feedback = "The agent could do better."
         else:
             raise ValueError("Final user message should contain either [GOOD] or [BAD].")
