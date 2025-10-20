@@ -2,7 +2,7 @@
   <img align="center" src="docs/assets/relai-logo.png" width="460px" />
 </p>
 <p align="left">
-<h1 align="center">RELAI: Simulate → Evaluate → Optimize AI Agents</h1>
+<h1 align="center">Simulate → Evaluate → Optimize AI Agents</h1>
 <p align="center">
   <a href="https://pypi.org/project/relai/"><img alt="PyPI" src="https://img.shields.io/pypi/v/relai.svg"></a>
   <img alt="Python" src="https://img.shields.io/pypi/pyversions/relai.svg">
@@ -33,9 +33,11 @@ uv add relai
 export RELAI_API_KEY="<RELAI_API_KEY>"
 ```
 
-## Quick Start
-
+### Example (Simulate → Evaluate → Optimize)
+Prerequisites: Needs an OpenAI API key and `openai-agents` installed
 ```python
+# export OPENAI_API_KEY="sk-..."
+# uv add openai-agents
 import asyncio
 import re
 
@@ -62,8 +64,7 @@ from relai.simulator import simulated
 async def get_user_query() -> str:
     """Get user's query about stock prices."""
     # In a real agent, this function might get input from a chat interface.
-    # Since we are simulating this function, we return a fixed query.
-    return "What is the current price of AAPL stock?"
+    return input("Enter you stock query: ")
 
 
 # Register parameters for optimization
@@ -73,7 +74,6 @@ register_param(
     init_value="You are a helpful assistant for stock price questions.",
     desc="system prompt for the agent",
 )
-
 
 async def agent_fn(tape: SimulationTape) -> AgentOutputs:
     question = await get_user_query()
