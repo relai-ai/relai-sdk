@@ -30,7 +30,7 @@ class Evaluator(ABC):
     Attributes:
         name (str): The name of the evaluator, used for identification.
         required_fields (list[str]): A list of field names (keys) that must be present in either `agent_inputs`
-            (of the sample), `eval_inputs` (of the sample), or `agent_outputs` (of the agent response).
+            (of the sample), `eval_inputs` (of the sample), or `agent_outputs` (of the agent log).
         transform (Callable): An optional callable to transform (pre-process) the `agent_outputs` of the agent
             response for the evaluator. Defaults to None.
         hyperparameters (dict[str, Any]): A dictionary of arbitrary keyword arguments passed during initialization,
@@ -48,7 +48,7 @@ class Evaluator(ABC):
         Args:
             name (str): The display name of the evaluator, used to identify the evaluator in evaluation results.
             required_fields (list[str]): A list of field names (keys) that must be present in either `agent_inputs`
-                (of the sample), `eval_inputs` (of the sample), or `agent_outputs` (of the agent response).
+                (of the sample), `eval_inputs` (of the sample), or `agent_outputs` (of the agent log).
             transform (Callable): An optional callable to transform (pre-process) the `agent_outputs` of the agent
                 response for the evaluator. Defaults to None.
             hyperparameters (dict[str, Any]): A dictionary of arbitrary keyword arguments passed during
@@ -78,7 +78,7 @@ class Evaluator(ABC):
     @abstractmethod
     async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:
         """
-        Abstract method: Computes the evaluation result for an agent response.
+        Abstract method: Computes the evaluation result for an agent log.
 
         Concrete subclasses must implement this method to define their unique evaluation logic. This method should
         process the `AgentLog` by accessing its `sample` and `agent_outputs` to derive the evaluation outcome,
@@ -100,7 +100,7 @@ class Evaluator(ABC):
 
     async def __call__(self, agent_log: AgentLog) -> EvaluatorLog:
         """
-        Executes the evaluation process for a given AI agent response.
+        Executes the evaluation process for a given AI agent log.
 
         Args:
             agent_log (AgentLog): The response from the AI agent to be evaluated.
@@ -178,7 +178,7 @@ class RELAIEvaluator(Evaluator):
 
     async def _run_evaluator_on_relai(self, agent_log: AgentLog) -> Any:
         """
-        Run the RELAI evaluator on the agent response.
+        Run the RELAI evaluator on the agent log.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -204,7 +204,7 @@ class RELAIEvaluator(Evaluator):
 
         Returns:
             EvaluatorResponse: A structured evaluation result containing the evaluator's unique ID, the original
-                agent response, and an optional `score` and `feedback` computed by the RELAI evaluator.
+                agent log, and an optional `score` and `feedback` computed by the RELAI evaluator.
         """
 
         response = await self._run_evaluator_on_relai(agent_log)
@@ -388,7 +388,7 @@ class RELAIStyleEvaluator(RELAIEvaluator):
 
     async def _run_evaluator_on_relai(self, agent_log: AgentLog) -> Any:
         """
-        Run the RELAI evaluator on the agent response.
+        Run the RELAI evaluator on the agent log.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -407,7 +407,7 @@ class RELAIStyleEvaluator(RELAIEvaluator):
 
     async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
         """
-        Compute the evaluation result based on the agent response using the RELAI evaluator.
+        Compute the evaluation result based on the agent log using the RELAI evaluator.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -465,7 +465,7 @@ class RELAIFormatEvaluator(RELAIEvaluator):
 
     async def _run_evaluator_on_relai(self, agent_log: AgentLog) -> Any:
         """
-        Run the RELAI evaluator on the agent response.
+        Run the RELAI evaluator on the agent log.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -484,7 +484,7 @@ class RELAIFormatEvaluator(RELAIEvaluator):
 
     async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
         """
-        Compute the evaluation result based on the agent response using the RELAI evaluator.
+        Compute the evaluation result based on the agent log using the RELAI evaluator.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -545,7 +545,7 @@ class RELAIRubricBasedEvaluator(RELAIEvaluator):
 
     async def _run_evaluator_on_relai(self, agent_log: AgentLog) -> Any:
         """
-        Run the RELAI rubric based evaluator on the agent response.
+        Run the RELAI rubric based evaluator on the agent log.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -573,7 +573,7 @@ class RELAIRubricBasedEvaluator(RELAIEvaluator):
 
     async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:
         """
-        Compute the evaluation result based on the agent response using the RELAI evaluator.
+        Compute the evaluation result based on the agent log using the RELAI evaluator.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -613,7 +613,7 @@ class RELAIRubricBasedEvaluator(RELAIEvaluator):
 
 class RELAIAnnotationEvaluator(RELAIEvaluator):
     """
-    Evaluator for assessing agent responses based on past human preference annotations
+    Evaluator for assessing agent logs based on past human preference annotations
     provided through the RELAI platform.
 
     **Required fields**:
@@ -646,7 +646,7 @@ class RELAIAnnotationEvaluator(RELAIEvaluator):
 
     async def _run_evaluator_on_relai(self, agent_log: AgentLog) -> Any:
         """
-        Run the RELAI evaluator on the agent response.
+        Run the RELAI evaluator on the agent log.
 
         Args:
             agent_log (AgentLog): The response from the AI agent.
@@ -675,6 +675,15 @@ class RELAIAnnotationEvaluator(RELAIEvaluator):
 
 
 class RELAICustomEvaluator(Evaluator):
+    """
+    Evaluator for assessing agent logs based on the custom evaluator prompt, input and output formats
+    defined on the RELAI platform.
+
+    **Required fields**:
+
+        - Any fields specified in the custom evaluator's input format (on the platform).
+    """
+
     prompt_template: ClassVar[str] = (
         """You are an expert evaluator. Follow the below instructions for evaluation:\n"""
         """<instructions>{instructions}</instructions>\n"""
@@ -689,6 +698,13 @@ class RELAICustomEvaluator(Evaluator):
         model_name: str = "gpt-5-mini",
         transform: Optional[Callable] = None,
     ):
+        """
+        Args:
+            evaluator_id (str): The unique identifier of the custom evaluator defined on the RELAI platform.
+            model_name (str, optional): The name of the model to use for the evaluator. Defaults to "gpt-5-mini".
+            transform (Callable): An optional callable to transform (pre-process) the `agent_outputs` of the agent
+                response for the evaluator. Defaults to None.
+        """
         client = get_default_client()
         evaluator_details = client.get_custom_evaluator(evaluator_id)
         evaluator_prompt = evaluator_details["parameters"]["prompt"]
