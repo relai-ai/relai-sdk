@@ -121,7 +121,6 @@ extra:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
   - Tutorials:
       - tutorials/index.md
       - Persona Set: tutorials/persona-set.md
