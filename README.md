@@ -202,5 +202,5 @@ If you use the SDK in your research, please consider citing our work:
 }
 ```
 
-<p align="center"> <sub>Made with ❤️ by the RELAI team — <a href="https://relai.ai">relai.ai</a> • <a href="https://discord.gg/sjaHJ34YYE">Community</a></sub> </p> ```
+<p align="center"> <sub>Made with ❤️ by the RELAI team — <a href="https://relai.ai">relai.ai</a> • <a href="https://discord.gg/sjaHJ34YYE">Community</a></sub> </p>
 
