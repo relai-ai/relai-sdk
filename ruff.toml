@@ -1,0 +1,3 @@
+line-length = 119
+[lint]
+select = ["I", "F"]

@@ -1,0 +1,39 @@
+name: Build and Upload Python Package to RELAI Package Index
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'  # Agent service uses Python 3.12, we might have to add other versions as well
+
+    # Step 3: Install Poetry
+    - name: Install build tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+
+    # Step 4: Build the package
+    - name: Build the package
+      run: |
+        python -m build
+
+    # Step 5: Upload the package to RELAI private PyPI
+    - name: Upload to RELAI PyPI
+      run: |
+        python -m twine upload --repository-url ${{ secrets.RELAI_PYPI_URL }} -u ${{ secrets.RELAI_PYPI_USERNAME }} -p ${{ secrets.RELAI_PYPI_PASSWORD }} dist/*
