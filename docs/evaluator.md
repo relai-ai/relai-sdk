@@ -21,3 +21,5 @@
         filters:
             - "!^_[^_]"
             - "!compute_evaluator_result"
+:::relai.critico.evaluate.RELAIAnnotationEvaluator
+:::relai.critico.evaluate.RELAICustomEvaluator

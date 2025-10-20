@@ -1,5 +1,5 @@
 <p align="center">
-  <img align="center" src="relai/docs/assets/relai-logo.png" width="460px" />
+  <img align="center" src="docs/assets/relai-logo.png" width="460px" />
 </p>
 <p align="left">
 <h1 align="center">RELAI: Simulate → Evaluate → Optimize AI Agents</h1>

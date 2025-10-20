@@ -7,4 +7,6 @@
 
 :::relai.benchmark.RELAISummarizationBenchmark
 
+:::relai.benchmark.RELAIAnnotationBenchmark
+
 :::relai.benchmark.CSVBenchmark

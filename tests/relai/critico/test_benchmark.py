@@ -1,6 +1,5 @@
 import pytest
 from pytest_mock import MockerFixture
-
 from relai.critico.benchmark import (
     Benchmark,
     CSVBenchmark,
