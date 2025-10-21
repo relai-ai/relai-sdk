@@ -4,6 +4,9 @@ import json
 import os
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Optional
+from uuid import uuid4
+
+from tqdm.auto import tqdm
 
 from relai import AsyncRELAI
 from relai.critico.critico import Critico, CriticoLog
@@ -135,8 +138,7 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
-            + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -162,7 +164,7 @@ class Maestro:
             return str(agent_outputs)
 
     async def _evaluate(
-        self, awaitables: list[Awaitable], criticos: list[Critico], verbose: bool = True, print_flag: str = ""
+        self, awaitables: list[Awaitable], criticos: list[Critico], verbose: bool = False, print_flag: str = ""
     ) -> tuple[list[dict[str, Any]], list[AgentLog]]:
         """
         Run and evaluate the current version of the agent through a set of awaitables.
@@ -170,8 +172,8 @@ class Maestro:
         Args:
             awaitables (list[Awaitable]): A list of awaitables, each representing a run of the agent
             criticos (list[Critico]): A list of Critico objects, each corresponding to an awaitable
-            verbose (bool): If True, related information will be printed during evaluation.
-                Defaults to True.
+            verbose (bool): If True, additional information will be printed during evaluation.
+                Defaults to False.
             print_flag (str): A string to be put next to the printed info when `verbose` is True.
                 Used to distinguish printed info from different types of evaluations.
 
@@ -215,15 +217,19 @@ class Maestro:
 
         if verbose:
             for test_case in test_cases:
-                print("input:\n", test_case["input"])
-                print(f"log{print_flag}:\n", test_case["log"])
-                print(f"output{print_flag}:\n", test_case["output"])
-                print(f"eval score{print_flag}:\n", test_case["eval_score"])
-                print(f"eval feedback{print_flag}:\n", test_case["eval_feedback"])
+                print("=================agent excution result===================")
+                print(f"- input:\n{test_case['input']}\n")
+                print(f"- log{print_flag}:\n{test_case['log']}\n")
+                print(f"- output{print_flag}:\n{test_case['output']}\n")
+                print(f"- eval score{print_flag}:\n{test_case['eval_score']}\n")
+                print(f"- eval feedback{print_flag}:\n{test_case['eval_feedback']}\n")
+                print("=========================================================\n\n")
 
         return test_cases, agent_logs
 
-    async def _iterate(self, batch_size: int, sampler: ProportionalSampler, verbose: bool = True) -> bool:
+    async def _iterate(
+        self, batch_size: int, sampler: ProportionalSampler, verbose: bool = False, group_id: str = None, pbar: tqdm = None
+    ) -> bool:
         """
         An iterate step will propose changes to the current version of the agent and
         conduct a preliminary examination of the proposed changes.
@@ -236,8 +242,11 @@ class Maestro:
                 i.e. `critico`, where `batch_size` of them will be used to propose changes and the other
                 `batch_size` of them will be used for preliminary examinations.
             sampler (ProportionalSampler): Sampler to use for selecting setups.
-            verbose (bool): If True, related information will be printed during the iterate step.
-                Defaults to True.
+            verbose (bool): If True, additional information will be printed during the iterate step.
+                Defaults to False.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
+            pbar (tqdm, optional): A progress bar to display the progress of the iteration. Defaults to None.
 
         Returns:
             bool: True if the proposed changes pass the preliminary examination and False otherwise.
@@ -250,16 +259,21 @@ class Maestro:
                 "No setup (simulator, critico) has been added to Maestro. Please add at least one setup before optimization."
             )
 
+        group_id = uuid4().hex if group_id is None else group_id
+
         setups = sampler.sample(batch_size * 2)
         awaitables = []
         criticos = []
         for setup in setups:
             simulator = setup["simulator"]
             critico = setup["critico"]
-            awaitables.append(simulator.run(num_runs=1))
+            awaitables.append(simulator.run(num_runs=1, group_id=group_id))
             criticos.append(critico)
 
         test_cases, agent_logs = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
+
+        if pbar is not None:
+            pbar.update(len(test_cases))
 
         analysis, proposed_values = await self._client.propose_values(
             {
@@ -276,14 +290,13 @@ class Maestro:
         for param, value in proposed_values.items():
             changes.append({"param": param, "previous value": params.__getattr__(param), "new value": value})
             if verbose:
-                print("--------------------------")
-                print("proposed param change:", param)
+                print("=" * 60)
+                print("- proposed param change:", param)
                 print("")
-                print("previous value:", params.__getattr__(param))
+                print("- previous value:\n\n", params.__getattr__(param))
                 print("")
-                print("new value:", value)
-                print("-----------\n")
-                print("--------------------------")
+                print("- new value:\n\n", value)
+                print("=" * 60)
 
         self.log.append({"proposal id": len(self.log), "proposed changes": changes})
 
@@ -297,12 +310,15 @@ class Maestro:
         for test_case, agent_log, setup in zip(test_cases, agent_logs, setups):
             simulator = setup["simulator"]
             critico = setup["critico"]
-            new_awaitables.append(simulator.rerun([agent_log.simulation_tape]))
+            new_awaitables.append(simulator.rerun([agent_log.simulation_tape], group_id=group_id))
             new_criticos.append(critico)
 
         test_cases_updated, _ = await self._evaluate(
             awaitables=new_awaitables, criticos=new_criticos, verbose=verbose, print_flag=" (changed)"
         )
+
+        if pbar is not None:
+            pbar.update(len(test_cases_updated))
 
         for sample_id in range(0, batch_size * 2):
             test_cases_updated[sample_id]["previous_log"] = test_cases[sample_id]["log"]
@@ -350,7 +366,7 @@ class Maestro:
             print("new avg score: ", new_score)
             print("accepted: ", review_decision["accepted"])
             print("review comment:\n", review_decision["full comment"])
-            print("-------------------------------------------\n\n")
+            print("-" * 60 + "\n\n")
 
         return review_decision["accepted"]
 
@@ -360,7 +376,7 @@ class Maestro:
         batch_size: int = 4,
         explore_radius: int = 5,
         explore_factor: float = 0.5,
-        verbose: bool = True,
+        verbose: bool = False,
     ):
         """
         Optimize the configs (parameters) of the agent.
@@ -376,7 +392,7 @@ class Maestro:
                 while a lower value allocates more rollouts to ensure the discovered configs are thoroughly evaluated.
                 Defaults to 0.5.
             verbose (bool): If True, related information will be printed during the optimization step.
-                Defaults to True.
+                Defaults to False.
 
         Raises:
             ValueError: If the input parameters are not valid.
@@ -395,18 +411,18 @@ class Maestro:
         iterate_steps: int = explore_radius
         select_steps: int = int(explore_radius * 4 * (1 - explore_factor) / explore_factor)
         num_rounds: int = int(total_rollouts / (iterate_steps * batch_size * 4 + select_steps * batch_size))
+        total_rollouts = num_rounds * (iterate_steps * batch_size * 4 + select_steps * batch_size)
 
-        if verbose:
-            print("optimize_config settings:")
-            print("  total_rollouts: ", total_rollouts)
-            print("  batch_size: ", batch_size)
-            print("  explore_radius: ", explore_radius)
-            print("  explore_factor: ", explore_factor)
-            print("-------------------------------------------")
-            print("  iterate_steps: ", iterate_steps)
-            print("  select_steps: ", select_steps)
-            print("  num_rounds: ", num_rounds)
-            print("-------------------------------------------\n\n")
+        print("optimize_config settings:")
+        print("  total_rollouts: ", total_rollouts)
+        print("  batch_size: ", batch_size)
+        print("  explore_radius: ", explore_radius)
+        print("  explore_factor: ", explore_factor)
+        print("-" * 60)
+        print("  iterate_steps: ", iterate_steps)
+        print("  select_steps: ", select_steps)
+        print("  num_rounds: ", num_rounds)
+        print("=" * 80 + "\n\n")
 
         if num_rounds == 0:
             raise ValueError(
@@ -418,19 +434,23 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
+        group_id = uuid4().hex
+        pbar = tqdm(total=total_rollouts, desc="Total rollouts consumed for config optimization")
 
         for round in range(num_rounds):
-            if verbose:
-                print(f"================== Round {round + 1}/{num_rounds} ==================")
-                print("Total versions: ", len(self.versions))
-                print("Rebase to version: ", self.current_version)
-                print("Score (current base): ", self.versions[self.current_version]["average_score"])
-                print("Visits (current base): ", self.versions[self.current_version]["visits"])
-                print("Visits (total): ", self.total_visits)
+            print("=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
+            print("Total versions: ", len(self.versions))
+            print("Rebase to version: ", self.current_version)
+            print("Score (current base): ", self.versions[self.current_version]["average_score"])
+            print("Visits (current base): ", self.versions[self.current_version]["visits"])
+            print("Visits (total): ", self.total_visits)
+            print("\n\n")
 
             new_version = False
             for _ in range(iterate_steps):
-                changes_accepted = await self._iterate(batch_size=batch_size, verbose=verbose, sampler=sampler)
+                changes_accepted = await self._iterate(
+                    batch_size=batch_size, verbose=verbose, sampler=sampler, group_id=group_id, pbar=pbar
+                )
                 if changes_accepted:
                     new_version = True
 
@@ -459,12 +479,15 @@ class Maestro:
                 for setup in setups:
                     simulator = setup["simulator"]
                     critico = setup["critico"]
-                    awaitables.append(simulator.run(num_runs=1))
+                    awaitables.append(simulator.run(num_runs=1, group_id=group_id))
                     criticos.append(critico)
 
                 test_cases_validation, _ = await self._evaluate(
                     awaitables=awaitables, criticos=criticos, verbose=verbose, print_flag="(validation)"
                 )
+
+                if pbar is not None:
+                    pbar.update(len(test_cases_validation))
 
                 validation_score = 0.0
                 for test_case in test_cases_validation:
@@ -493,21 +516,22 @@ class Maestro:
 
             # Switch to the current version with highest score
             await self._select(explore=False)
-            if verbose:
-                print("Total versions: ", len(self.versions))
-                print("Best version: ", self.current_version)
-                print("Score (best version): ", self.versions[self.current_version]["average_score"])
-                print("Visits (best version): ", self.versions[self.current_version]["visits"])
-                print("Visits (total): ", self.total_visits)
 
-                print(
-                    "all versions: ",
-                    {
-                        i: {"score": self.versions[i]["average_score"], "visits": self.versions[i]["visits"]}
-                        for i in range(len(self.versions))
-                    },
-                )
-                print("--------------------")
+            print("=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
+            print("Total versions: ", len(self.versions))
+            print("Best version: ", self.current_version)
+            print("Score (best version): ", self.versions[self.current_version]["average_score"])
+            print("Visits (best version): ", self.versions[self.current_version]["visits"])
+            print("Visits (total): ", self.total_visits)
+
+            print(
+                "all versions: ",
+                {
+                    i: {"score": self.versions[i]["average_score"], "visits": self.versions[i]["visits"]}
+                    for i in range(len(self.versions))
+                },
+            )
+            print("--------------------")
 
             async def sync_to_platform():
                 payload = ConfigOptVizSchema(
@@ -543,10 +567,9 @@ class Maestro:
 
             if self.log_to_platform:
                 await sync_to_platform()
-                if verbose:
-                    print(
-                        f"Results of round {round + 1}/{num_rounds} uploaded to RELAI platform, visualization id: {self.config_opt_viz_id}"
-                    )
+                print(
+                    f"Results of round {round + 1}/{num_rounds} uploaded to RELAI platform, visualization id: {self.config_opt_viz_id}"
+                )
 
     async def optimize_structure(
         self,
@@ -554,7 +577,7 @@ class Maestro:
         description: Optional[str] = None,
         code_paths: Optional[list[str]] = None,
         name: str = "No Name",
-        verbose: bool = True,
+        verbose: bool = False,
     ) -> str:
         """
         Propose structural changes (i.e. changes that cannot be achieved by setting parameters alone) to
@@ -569,12 +592,16 @@ class Maestro:
                 the implementation of the agent.
             name (str, optional): Name of the graph optimization visualization on RELAI platform.
                 Defaults to "No Name".
-            verbose (bool): If True, related information will be printed during the optimization.
-                Defaults to True.
+            verbose (bool): If True, additional information will be printed during the optimization.
+                Defaults to False.
 
         Returns:
             str: Suggestion for structural changes to the agent.
         """
+
+        print("optimize_structure settings:")
+        print("  total_rollouts: ", total_rollouts)
+        print("-" * 60 + "\n\n")
 
         if code_paths is not None:
             code = extract_code(code_paths=code_paths)
@@ -585,17 +612,22 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
+        group_id = uuid4().hex
+
+        print("Running the agent to collect traces...")
+
         setups = sampler.sample(total_rollouts)
         awaitables = []
         criticos = []
         for setup in setups:
             simulator = setup["simulator"]
             critico = setup["critico"]
-            awaitables.append(simulator.run(num_runs=1))
+            awaitables.append(simulator.run(num_runs=1, group_id=group_id))
             criticos.append(critico)
 
         test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
 
+        print("Optimizing structure...")
         suggestion = await self._client.optimize_structure(
             {
                 "agent_name": get_full_func_name(self.agent_fn),
@@ -628,12 +660,12 @@ class Maestro:
 
             return await self._client.update_graph_opt_visual(payload)
 
+        print("=" * 40 + "suggestion" + "=" * 40)
+        print(suggestion)
+        print("=" * 90 + "\n\n")
+
         if self.log_to_platform:
             uid = await sync_to_platform()
-            if verbose:
-                print(f"Results uploaded to RELAI platform, visualization id: {uid}")
-
-        if verbose:
-            print("suggestion:\n", suggestion)
+            print(f"Results uploaded to RELAI platform, visualization id: {uid}")
 
         return suggestion

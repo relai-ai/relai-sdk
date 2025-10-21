@@ -139,9 +139,9 @@ async def main() -> None:
 
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
-            total_rollouts=80,  # Total number of rollouts to use for optimization.
+            total_rollouts=20,  # Total number of rollouts to use for optimization.
             batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
-            explore_radius=3,  # A positive integer controlling the aggressiveness of exploration during optimization.
+            explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
             verbose=True,  # If True, related information will be printed during the optimization step.
         )

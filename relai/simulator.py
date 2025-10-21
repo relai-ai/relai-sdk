@@ -203,15 +203,17 @@ class SyncSimulator(BaseSimulator):
             raise ValueError("client must be provided if log_runs is True")
         self.client = client
 
-    def run(self, num_runs: int) -> list[AgentLog]:
+    def run(self, num_runs: int, group_id: str = None) -> list[AgentLog]:
         """
         Run the simulator for a specified number of times.
 
         Args:
             num_runs (int): The number of simulation runs to execute.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex
+        group_id = uuid4().hex if group_id is None else group_id
         tracking_on()
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
@@ -235,16 +237,18 @@ class SyncSimulator(BaseSimulator):
         tracking_off()
         return agent_logs
 
-    def rerun(self, simulation_tapes: list[SimulationTape]) -> list[AgentLog]:
+    def rerun(self, simulation_tapes: list[SimulationTape], group_id: str = None) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
 
         Args:
             simulation_tapes (list[SimulationTape]): The list of simulation tapes to rerun. This allows for re-executing
                 the agent in an environment identical to a previous run and is useful for debugging and optimization.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex
+        group_id = uuid4().hex if group_id is None else group_id
         tracking_on()
         for tape in simulation_tapes:
             new_tape = tape.copy()
@@ -299,14 +303,16 @@ class AsyncSimulator(BaseSimulator):
             raise ValueError("client must be provided if log_runs is True")
         self.client = client
 
-    async def run(self, num_runs: int) -> list[AgentLog]:
+    async def run(self, num_runs: int, group_id: str = None) -> list[AgentLog]:
         """Run the simulator for a specified number of times.
 
         Args:
             num_runs (int): The number of simulation runs to execute.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex
+        group_id = uuid4().hex if group_id is None else group_id
         tracking_on()
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
@@ -330,16 +336,18 @@ class AsyncSimulator(BaseSimulator):
         tracking_off()
         return agent_logs
 
-    async def rerun(self, simulation_tapes: list[SimulationTape]) -> list[AgentLog]:
+    async def rerun(self, simulation_tapes: list[SimulationTape], group_id: str = None) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
 
         Args:
             simulation_tapes (list[SimulationTape]): The list of simulation tapes to rerun. This allows for re-executing
                 the agent in an environment identical to a previous run and is useful for debugging and optimization.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex
+        group_id = uuid4().hex if group_id is None else group_id
         tracking_on()
         for tape in simulation_tapes:
             new_tape = tape.copy()

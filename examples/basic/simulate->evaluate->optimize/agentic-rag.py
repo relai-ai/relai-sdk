@@ -160,7 +160,7 @@ async def main() -> None:
         # 5.4.1 — Optimize agent configurations (the parameters registered earlier in STEP 2)
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
-            total_rollouts=50,  # Total number of rollouts to use for optimization.
+            total_rollouts=80,  # Total number of rollouts to use for optimization.
             batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=3,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
