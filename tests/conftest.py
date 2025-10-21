@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 
 from relai import AsyncRELAI
-from relai.critico.benchmark import AgentResponse, Sample
+from relai.data import AgentLog, RELAISample, SimulationTape
 
 
 @pytest.fixture(scope="function")
@@ -36,13 +36,13 @@ async def relai_client(set_env_vars) -> AsyncGenerator[AsyncRELAI, None]:
 
 
 @pytest.fixture(scope="module")
-def summarization_sample() -> Sample:
+def summarization_sample() -> RELAISample:
     """
     Fixture to provide a sample for a summarization benchmark.
     """
-    return Sample(
+    return RELAISample(
         benchmark_id="benchmark-123",
-        sample_id="sample-123",
+        id="sample-123",
         agent_inputs={
             "source": (
                 """The Sun is the star at the centre of the Solar System. It is a massive, nearly perfect sphere of """
@@ -53,7 +53,7 @@ def summarization_sample() -> Sample:
                 """since antiquity."""
             )
         },
-        eval_inputs={
+        extras={
             "key_facts": {
                 "The Sun is the star at the centre of the Solar System.": 10,
                 "It is a massive, nearly perfect sphere of hot plasma.": 6,
@@ -76,12 +76,12 @@ def summarization_sample() -> Sample:
 
 
 @pytest.fixture(scope="module")
-def summarization_agent_response(summarization_sample: Sample) -> AgentResponse:
+def summarization_agent_response(summarization_sample: RELAISample) -> AgentLog:
     """
     Fixture to provide a summarization agent response.
     """
-    return AgentResponse(
-        sample=summarization_sample,
+    return AgentLog(
+        simulation_tape=SimulationTape(summarization_sample),
         agent_outputs={
             "summary": (
                 """The Sun is the star at the center of the Solar System, a massive sphere of hot plasma heated by """
@@ -94,17 +94,17 @@ def summarization_agent_response(summarization_sample: Sample) -> AgentResponse:
 
 
 @pytest.fixture(scope="module")
-def question_answering_sample() -> Sample:
+def question_answering_sample() -> RELAISample:
     """
     Fixture to provide a sample for a question answering benchmark.
     """
-    return Sample(
+    return RELAISample(
         benchmark_id="benchmark-123",
-        sample_id="sample-123",
+        id="sample-123",
         agent_inputs={
             "question": "How many planets are in the Solar System?",
         },
-        eval_inputs={
+        extras={
             "std_answer": "There are eight planets in the Solar System.",
             "rubrics": {
                 "Mention that there are exactly eight planets.": 10,
@@ -114,12 +114,12 @@ def question_answering_sample() -> Sample:
 
 
 @pytest.fixture(scope="module")
-def question_answering_agent_response(question_answering_sample: Sample) -> AgentResponse:
+def question_answering_agent_response(question_answering_sample: RELAISample) -> AgentLog:
     """
     Fixture to provide a question answering agent response.
     """
-    return AgentResponse(
-        sample=question_answering_sample,
+    return AgentLog(
+        simulation_tape=SimulationTape(question_answering_sample),
         agent_outputs={
             "answer": "There are eight planets in the Solar System.",
         },
@@ -133,12 +133,12 @@ def sample_csv_file():
     """
     path = None
 
-    def _sample_csv_file(sample: Sample):
+    def _sample_csv_file(sample: RELAISample):
         nonlocal path
         # Create a temporary CSV file with sample data
         _, path = tempfile.mkstemp(suffix=".csv", text=True)
         with open(path, "w", encoding="utf-8") as f:
-            fieldnames = list(sample.agent_inputs.keys()) + list(sample.eval_inputs.keys())
+            fieldnames = list(sample.agent_inputs.keys()) + list(sample.extras.keys())
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             # Write the sample data
@@ -148,7 +148,7 @@ def sample_csv_file():
                 writer.writerow(
                     {
                         **{k: json.dumps(v) if not isinstance(v, str) else v for k, v in sample.agent_inputs.items()},
-                        **{k: json.dumps(v) if not isinstance(v, str) else v for k, v in sample.eval_inputs.items()},
+                        **{k: json.dumps(v) if not isinstance(v, str) else v for k, v in sample.extras.items()},
                     }
                 )
         return path
