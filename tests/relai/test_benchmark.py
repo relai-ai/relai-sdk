@@ -1,16 +1,17 @@
 import pytest
 from pytest_mock import MockerFixture
-from relai.critico.benchmark import (
+
+from relai.benchmark import (
     Benchmark,
     CSVBenchmark,
     RELAIQuestionAnsweringBenchmark,
     RELAISummarizationBenchmark,
-    Sample,
 )
+from relai.data import RELAISample
 
 
 @pytest.mark.unit
-def test_benchmark_creation(summarization_sample: Sample):
+def test_benchmark_creation(summarization_sample: RELAISample):
     """
     Test the creation of a benchmark sample.
     """
@@ -20,7 +21,7 @@ def test_benchmark_creation(summarization_sample: Sample):
 
 
 @pytest.mark.unit
-def test_benchmark_samples_generator(summarization_sample: Sample):
+def test_benchmark_samples_generator(summarization_sample: RELAISample):
     """
     Test the creation of a benchmark sample.
     """
@@ -33,7 +34,7 @@ def test_benchmark_samples_generator(summarization_sample: Sample):
 
 
 @pytest.mark.unit
-def test_benchmark_sampling(summarization_sample: Sample):
+def test_benchmark_sampling(summarization_sample: RELAISample):
     """
     Test the sampling of a benchmark.
     """
@@ -45,7 +46,6 @@ def test_benchmark_sampling(summarization_sample: Sample):
 
 
 @pytest.mark.unit
-@pytest.mark.unit
 def test_csv_benchmark(sample_csv_file, question_answering_sample):
     """
     Test the CSVBenchmark class with a sample CSV file.
@@ -53,7 +53,7 @@ def test_csv_benchmark(sample_csv_file, question_answering_sample):
     benchmark = CSVBenchmark(
         csv_file=sample_csv_file(question_answering_sample),
         agent_input_columns=["question"],
-        eval_input_columns=["std_answer", "rubrics"],
+        extra_columns=["std_answer", "rubrics"],
         benchmark_id="tmp-csv-benchmark",
     )
 
@@ -61,21 +61,20 @@ def test_csv_benchmark(sample_csv_file, question_answering_sample):
     assert len(benchmark.samples) == 3
     sample = benchmark.samples[0]
     assert sample.agent_inputs["question"] == "How many planets are in the Solar System?"
-    assert sample.eval_inputs["std_answer"] == "There are eight planets in the Solar System."
-    assert sample.eval_inputs["rubrics"] == {
+    assert sample.extras["std_answer"] == "There are eight planets in the Solar System."
+    assert sample.extras["rubrics"] == {
         "Mention that there are exactly eight planets.": 10,
     }
 
 
 @pytest.mark.unit
-@pytest.mark.asyncio
-async def test_relai_question_answering_benchmark(relai_client, mocker: MockerFixture):
+def test_relai_question_answering_benchmark(relai_client, mocker: MockerFixture):
     """
     Test the RELAIQuestionAnsweringBenchmark class with a sample.
     """
     mocker.patch(
-        "relai._client.AsyncRELAI._request",
-        new=mocker.AsyncMock(
+        "relai._client.RELAI._request",
+        new=mocker.Mock(
             side_effect=[
                 # Mock the benchmark metadata response
                 {
@@ -108,30 +107,27 @@ async def test_relai_question_answering_benchmark(relai_client, mocker: MockerFi
         ),
     )
     benchmark = RELAIQuestionAnsweringBenchmark(
-        client=relai_client,
         benchmark_id="relai-qa-benchmark",
     )
-    await benchmark.fetch_samples()
 
     assert benchmark.benchmark_id == "relai-qa-benchmark"
     assert len(benchmark.samples) == 1
     sample = benchmark.samples[0]
     assert sample.agent_inputs["question"] == "How many planets are in the Solar System?"
-    assert sample.eval_inputs["std_answer"] == "There are eight planets in the Solar System."
-    assert sample.eval_inputs["rubrics"] == {
+    assert sample.extras["std_answer"] == "There are eight planets in the Solar System."
+    assert sample.extras["rubrics"] == {
         "Mention that there are exactly eight planets.": 3,
     }
 
 
 @pytest.mark.unit
-@pytest.mark.asyncio
-async def test_relai_summarization_benchmark(relai_client, mocker: MockerFixture):
+def test_relai_summarization_benchmark(relai_client, mocker: MockerFixture):
     """
     Test the RELAISummarizationBenchmark class with a sample.
     """
     mocker.patch(
-        "relai._client.AsyncRELAI._request",
-        new=mocker.AsyncMock(
+        "relai._client.RELAI._request",
+        new=mocker.Mock(
             side_effect=[
                 # Mock the benchmark metadata response
                 {
@@ -163,19 +159,17 @@ async def test_relai_summarization_benchmark(relai_client, mocker: MockerFixture
         ),
     )
     benchmark = RELAISummarizationBenchmark(
-        client=relai_client,
         benchmark_id="relai-summarization-benchmark",
     )
-    await benchmark.fetch_samples()
 
     assert benchmark.benchmark_id == "relai-summarization-benchmark"
     assert len(benchmark.samples) == 1
     sample = benchmark.samples[0]
     assert sample.agent_inputs["source"] == "The Solar System is composed of eight planets."
-    assert sample.eval_inputs["key_facts"] == "The Solar System has eight planets."
-    assert sample.eval_inputs["style_rubrics"] == {
+    assert sample.extras["key_facts"] == "The Solar System has eight planets."
+    assert sample.extras["style_rubrics"] == {
         "Summary should be comic in tone": 5,
     }
-    assert sample.eval_inputs["format_rubrics"] == {
+    assert sample.extras["format_rubrics"] == {
         "Summary should be a list": 5,
     }

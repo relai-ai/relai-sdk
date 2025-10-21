@@ -2,7 +2,6 @@ import pytest
 from pytest_mock import MockerFixture
 
 from relai.critico.evaluate import (
-    EvaluatorResponse,
     RELAIContentEvaluator,
     RELAIFormatEvaluator,
     RELAIHallucinationEvaluator,
@@ -10,32 +9,7 @@ from relai.critico.evaluate import (
     RELAIRubricBasedEvaluator,
     RELAIStyleEvaluator,
 )
-
-
-@pytest.mark.unit
-def test_evaluator_response_extra_fields(question_answering_agent_response):
-    """
-    Test the EvaluatorResponse class with extra fields.
-    """
-    response = EvaluatorResponse(
-        evaluator_id="test-evaluator",
-        evaluator_name="Test Evaluator",
-        evaluator_configuration={"param1": "value", "param2": 1},
-        agent_response=question_answering_agent_response,
-        score=0.9,
-        feedback="Good job!",
-        extra_field1="This is some extra information.",  # pyright: ignore[reportCallIssue]
-        extra_field2={"key": "value"},  # pyright: ignore[reportCallIssue]
-    )
-
-    assert response.extra_field1 == "This is some extra information."  # pyright: ignore[reportAttributeAccessIssue]
-    assert response.extra_field2 == {"key": "value"}  # pyright: ignore[reportAttributeAccessIssue]
-    assert response.evaluator_outputs == {
-        "score": 0.9,
-        "feedback": "Good job!",
-        "extra_field1": "This is some extra information.",
-        "extra_field2": {"key": "value"},
-    }
+from relai.data import EvaluatorLog
 
 
 @pytest.mark.unit
@@ -64,9 +38,9 @@ async def test_relai_length_evaluator(relai_client, summarization_agent_response
     result = await evaluator(summarization_agent_response)
 
     # Assert the result
-    assert isinstance(result, EvaluatorResponse)
-    assert result.score == 0.75
-    assert result.feedback == "Summary is a tad too long."
+    assert isinstance(result, EvaluatorLog)
+    assert result.outputs["score"] == 0.75
+    assert result.outputs["feedback"] == "Summary is a tad too long."
 
 
 @pytest.mark.unit
@@ -95,9 +69,9 @@ async def test_relai_content_evaluator(relai_client, summarization_agent_respons
     result = await evaluator(summarization_agent_response)
 
     # Assert the result
-    assert isinstance(result, EvaluatorResponse)
-    assert result.score == 0.81
-    assert result.feedback == "The summary captures most key facts but misses a few details."
+    assert isinstance(result, EvaluatorLog)
+    assert result.outputs["score"] == 0.81
+    assert result.outputs["feedback"] == "The summary captures most key facts but misses a few details."
 
 
 @pytest.mark.unit
@@ -127,9 +101,9 @@ async def test_relai_hallucination_evaluator(relai_client, summarization_agent_r
     result = await evaluator(summarization_agent_response)
 
     # Assert the result
-    assert isinstance(result, EvaluatorResponse)
-    assert result.score == 1.0
-    assert result.feedback == "The summary does not contain any hallucinations."
+    assert isinstance(result, EvaluatorLog)
+    assert result.outputs["score"] == 1.0
+    assert result.outputs["feedback"] == "The summary does not contain any hallucinations."
 
 
 @pytest.mark.unit
@@ -165,9 +139,9 @@ async def test_relai_style_evaluator(relai_client, summarization_agent_response,
     result = await evaluator(summarization_agent_response)
 
     # Assert the result
-    assert isinstance(result, EvaluatorResponse)
-    assert result.score == 1.0
-    assert result.feedback == (
+    assert isinstance(result, EvaluatorLog)
+    assert result.outputs["score"] == 1.0
+    assert result.outputs["feedback"] == (
         """The adherence to style rubrics is as follows:\n"""
         """- Perfect adherence for Clarity\n"""
         """- Perfect adherence for Conciseness\n"""
@@ -207,9 +181,9 @@ async def test_relai_format_evaluator(relai_client, summarization_agent_response
     result = await evaluator(summarization_agent_response)
 
     # Assert the result
-    assert isinstance(result, EvaluatorResponse)
-    assert result.score == 0.0
-    assert result.feedback == (
+    assert isinstance(result, EvaluatorLog)
+    assert result.outputs["score"] == 0.0
+    assert result.outputs["feedback"] == (
         """The adherence to format rubrics is as follows:\n"""
         """- Perfect adherence for Any style\n"""
         """- No adherence to list format"""
@@ -239,6 +213,6 @@ async def test_relai_rubric_based_evaluator(relai_client, question_answering_age
     result = await evaluator(question_answering_agent_response)
 
     # Assert the result
-    assert isinstance(result, EvaluatorResponse)
-    assert result.score == 1.0
-    assert result.feedback == "The response satisfies all criteria."
+    assert isinstance(result, EvaluatorLog)
+    assert result.outputs["score"] == 1.0
+    assert result.outputs["feedback"] == "The response satisfies all criteria."

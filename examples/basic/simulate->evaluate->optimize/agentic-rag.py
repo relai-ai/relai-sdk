@@ -1,7 +1,7 @@
 # ------------------------------------------------------------
 # Prereqs:
 #   export OPENAI_API_KEY="sk-..."          # if your agent/tool uses OpenAI
-#   pip install relai-sdk                   # relai
+#   pip install relai                   # relai
 #   pip install openinference-instrumentation-openai-agents  # optional tracing
 
 import asyncio
@@ -153,13 +153,16 @@ async def main() -> None:
         # 5.4 — OPTIMIZE with Maestro
         maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name=AGENT_NAME)
         maestro.add_setup(simulator=simulator, critico=critico)
+        # one can use multiple simulator+critico setups with different weights by calling `add_setup` multiple times
+        # maestro.add_setup(simulator=simulator, critico=critico, weight = 1)
+        # maestro.add_setup(simulator=another_simulator, critico=another_critico, weight = 0.5)
 
         # 5.4.1 — Optimize agent configurations (the parameters registered earlier in STEP 2)
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
-            total_rollouts=50,  # Total number of rollouts to use for optimization.
+            total_rollouts=80,  # Total number of rollouts to use for optimization.
             batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
-            explore_radius=5,  # A positive integer controlling the aggressiveness of exploration during optimization.
+            explore_radius=3,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
             verbose=True,  # If True, related information will be printed during the optimization step.
         )

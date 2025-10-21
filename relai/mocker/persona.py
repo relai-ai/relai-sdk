@@ -141,16 +141,18 @@ class PersonaSet(Sequence[Persona]):
     A collection of Persona instances loaded from a persona set on the RELAI platform.
     """
 
-    def __init__(self, persona_set_id: str) -> None:
+    def __init__(self, persona_set_id: str, **persona_kwargs: Any) -> None:
         """
         Initializes the PersonaSet with the given persona set ID.
 
         Args:
             persona_set_id (str): The ID of the persona set on the RELAI platform.
+            **persona_kwargs: Keyword arguments that are forwarded to each Persona created from the set.
         """
         self.persona_set_id = persona_set_id
         self._user_personas = None
         self._personas = None
+        self._persona_kwargs = persona_kwargs
 
     def user_personas(self) -> list[str]:
         if self._user_personas is None:
@@ -161,7 +163,9 @@ class PersonaSet(Sequence[Persona]):
 
     def personas(self) -> list[Persona]:
         if self._personas is None:
-            self._personas = [Persona(user_persona=persona) for persona in self.user_personas()]
+            self._personas = [
+                Persona(user_persona=persona, **self._persona_kwargs) for persona in self.user_personas()
+            ]
         return self._personas
 
     @overload

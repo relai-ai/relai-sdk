@@ -1,3 +1,5 @@
+<h1>Custom Evaluator</h1>
+
 To define a custom evaluator, write a class basing `relai.critico.evaluate.Evaluator` and override `compute_evaluator_result`
 to describe your custom evaluation logic.
 

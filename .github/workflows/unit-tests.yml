@@ -1,0 +1,34 @@
+name: Run Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    env:
+      RELAI_API_KEY: relai-org-test-key
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv with Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+          cache: true
+          cache-dependency-path: |
+            pyproject.toml
+            uv.lock
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Run Ruff Check
+        run: uv run ruff check
+
+      - name: Run unit tests
+        run: uv run pytest -m unit

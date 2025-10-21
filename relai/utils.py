@@ -34,20 +34,57 @@ def create_logging_span(logger_id: str | None = None):
 
 
 def log_model(*args, **kwargs):
+    """
+    Logs a model call event.
+
+    Args:
+        name (str): Name of the model.
+        input (Any): Input to the model.
+        output (Any): Output from the model.
+        note (Optional[str]): Optional annotation.
+    """
     logger = get_current_logger()
     logger.log_model(*args, **kwargs)
 
 
 def log_tool(*args, **kwargs):
+    """
+    Logs a tool call event.
+
+    Args:
+        name (str): Name of the tool.
+        input (Any): Input to the tool.
+        output (Any): Output from the tool.
+        note (Optional[str]): Optional annotation.
+    """
     logger = get_current_logger()
     logger.log_tool(*args, **kwargs)
 
 
 def log_persona(*args, **kwargs):
+    """
+    Logs a persona activity.
+
+    Args:
+        name (str): Name of the persona.
+        model_name (str): Name of the model.
+        input (Any): Input to the persona.
+        output (Any): Output from the persona.
+        note (Optional[str]): Optional annotation.
+    """
     logger = get_current_logger()
     logger.log_persona(*args, **kwargs)
 
 
 def log_router(*args, **kwargs):
+    """
+    Logs a router event.
+
+    Args:
+        name (str): Name of the router.
+        input (Any): Input to the router.
+        output (Any): Output from the router.
+        note (Optional[str]): Optional annotation.
+    """
     logger = get_current_logger()
     logger.log_router(*args, **kwargs)
