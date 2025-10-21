@@ -576,7 +576,6 @@ class Maestro:
         total_rollouts: int,
         description: Optional[str] = None,
         code_paths: Optional[list[str]] = None,
-        name: str = "No Name",
         verbose: bool = False,
     ) -> str:
         """
@@ -590,8 +589,6 @@ class Maestro:
             description (str, optional): Text description of the current structure/workflow/... of the agent.
             code_paths (list[str], optional): A list of paths corresponding to code files containing
                 the implementation of the agent.
-            name (str, optional): Name of the graph optimization visualization on RELAI platform.
-                Defaults to "No Name".
             verbose (bool): If True, additional information will be printed during the optimization.
                 Defaults to False.
 
@@ -643,7 +640,7 @@ class Maestro:
 
         async def sync_to_platform():
             payload = GraphOptVizSchema(
-                name=name,
+                name=self.name,
                 proposal=suggestion,
                 runs=[
                     RunSchema(
