@@ -203,7 +203,7 @@ class SyncSimulator(BaseSimulator):
             raise ValueError("client must be provided if log_runs is True")
         self.client = client
 
-    def run(self, num_runs: int, group_id: str = None) -> list[AgentLog]:
+    def run(self, num_runs: int, group_id: str | None = None) -> list[AgentLog]:
         """
         Run the simulator for a specified number of times.
 
@@ -237,7 +237,7 @@ class SyncSimulator(BaseSimulator):
         tracking_off()
         return agent_logs
 
-    def rerun(self, simulation_tapes: list[SimulationTape], group_id: str = None) -> list[AgentLog]:
+    def rerun(self, simulation_tapes: list[SimulationTape], group_id: str | None = None) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
 
@@ -303,7 +303,7 @@ class AsyncSimulator(BaseSimulator):
             raise ValueError("client must be provided if log_runs is True")
         self.client = client
 
-    async def run(self, num_runs: int, group_id: str = None) -> list[AgentLog]:
+    async def run(self, num_runs: int, group_id: str | None = None) -> list[AgentLog]:
         """Run the simulator for a specified number of times.
 
         Args:
@@ -336,7 +336,7 @@ class AsyncSimulator(BaseSimulator):
         tracking_off()
         return agent_logs
 
-    async def rerun(self, simulation_tapes: list[SimulationTape], group_id: str = None) -> list[AgentLog]:
+    async def rerun(self, simulation_tapes: list[SimulationTape], group_id: str | None = None) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
 
