@@ -134,7 +134,8 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
+            + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -224,7 +225,12 @@ class Maestro:
         return test_cases, agent_logs
 
     async def _iterate(
-        self, batch_size: int, sampler: ProportionalSampler, verbose: bool = False, group_id: str = None, pbar: tqdm = None
+        self,
+        batch_size: int,
+        sampler: ProportionalSampler,
+        verbose: bool = False,
+        group_id: str | None = None,
+        pbar: tqdm | None = None,
     ) -> bool:
         """
         An iterate step will propose changes to the current version of the agent and
