@@ -24,5 +24,5 @@ how to use annotation benchmarks in agent optimization, see [simulate->annotate-
 
     <img src="../assets/tutorials/annotation-benchmark/4.png" alt="Add the annotated run to a benchmark."/>
 
-5. Continue to annotate and add other runs to the benchmark. The benchmark is already ready-to-use with its benchmark id. See [simulate->annotate->optimze](/examples/basic/simulate->annotate->optimize/) for how to use annotation benchmarks in 
+5. Continue to annotate and add other runs to the benchmark. The benchmark is already ready-to-use with its benchmark id. See [simulate->annotate->optimze](https://github.com/relai-ai/relai-sdk/tree/main/examples/basic/simulate-%3Eannotate-%3Eoptimize/) for how to use annotation benchmarks in 
 agent optimization.
