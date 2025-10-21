@@ -123,6 +123,7 @@ nav:
   - Home: index.md
   - Tutorials:
       - tutorials/index.md
+      - Annotation Benchmark: tutorials/annotation-benchmark.md
       - Persona Set: tutorials/persona-set.md
       - Mock MCP Server: tutorials/mock-mcp-server.md
       - Custom Evaluator: tutorials/custom-evaluator.md
