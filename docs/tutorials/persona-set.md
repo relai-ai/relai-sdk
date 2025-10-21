@@ -30,7 +30,8 @@ async def get_user_input():
     return msg
 ```
 
-<h3>2. When setting up the simulation environment, bind the persona set to the corresponding fully-qualified function names.</h3>
+<h3>2. When setting up the simulation environment, bind the persona set to the corresponding fully-qualified function names.</h3>  
+
 ```python
 from relai.simulator import AsyncSimulator, random_env_generator
 
