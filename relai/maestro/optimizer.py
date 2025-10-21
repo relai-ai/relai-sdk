@@ -31,7 +31,6 @@ class Maestro:
         agent_fn: AsyncAgent,
         goal: Optional[str] = None,
         max_memory: int = 20,
-        max_proposals: int = 3,
         name: str = "No Name",
         log_to_platform: bool = True,
     ):
@@ -43,8 +42,6 @@ class Maestro:
                 will be considered as the only goal. Defaults to None.
             max_memory (int, optional): Control the maximum number of previous optimization history visible at each
                 optimization step. Defaults to 20.
-            max_proposals (int, optional): Control the maximum number of proposals to consider at each optimization step.
-                Defaults to 3.
             name (str, optional): Name of the configuration optimization visualization on RELAI platform.
                 Defaults to "No Name".
             log_to_platform (bool): Whether to log optimization progress and results on RELAI platform.
@@ -56,7 +53,6 @@ class Maestro:
         self.max_memory: int = max_memory
         self._client: AsyncRELAI = client
         self.goal: str = goal if goal is not None else "Higher scores"
-        self.max_proposals: int = max_proposals
         self.log_to_platform: bool = log_to_platform
         self.config_opt_viz_id: str | None = None
         self.name: str = name
@@ -280,7 +276,6 @@ class Maestro:
                 "params": params.export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
                 "test_cases": test_cases[:batch_size],
-                "max_proposals": self.max_proposals,
                 "goal": self.goal,
                 "param_graph": param_graph.export(),
             }
