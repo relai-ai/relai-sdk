@@ -134,8 +134,7 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
-            + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -407,7 +406,6 @@ class Maestro:
         if explore_factor <= 0 or explore_factor >= 1:
             raise ValueError(f"`explore_factor` must be a float between 0 and 1, got {explore_factor}.")
 
-
         group_size = (batch_size + 1) // 2
         # total_rollouts = (iterate_steps * group_size * 4 + select_steps * group_size) * num_rounds
         # explore_factor = (iterate_steps * group_size * 4) / (iterate_steps * group_size * 4 + select_steps * group_size)
@@ -444,8 +442,13 @@ class Maestro:
             print("=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
             print("Total versions accepted: ", len(self.versions))
             print("Rebase to version: ", self.current_version)
-            print("Evaluation score for the current base version: ", self.versions[self.current_version]["average_score"])
-            print("Number of evaluation rollouts for the current base version: ", self.versions[self.current_version]["visits"])
+            print(
+                "Score for the current base version: %s based on %s rollouts"
+                % (
+                    self.versions[self.current_version]["average_score"],
+                    self.versions[self.current_version]["visits"] * group_size,
+                )
+            )
             print("\n\n")
 
             new_version = False
@@ -522,13 +525,18 @@ class Maestro:
             print("=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
             print("Total versions accepted: ", len(self.versions))
             print("Best version index: ", self.current_version)
-            print("Evaluation score for the best version: ", self.versions[self.current_version]["average_score"])
-            print("Number of evaluation rollouts for the best version: ", self.versions[self.current_version]["visits"])
+            print(
+                "Score for the best version: %s based on %s rollouts"
+                % (
+                    self.versions[self.current_version]["average_score"],
+                    self.versions[self.current_version]["visits"] * group_size,
+                )
+            )
 
             print(
-                "all versions: ",
+                "All versions: ",
                 {
-                    i: {"score": self.versions[i]["average_score"], "visits": self.versions[i]["visits"]}
+                    i: {"score": self.versions[i]["average_score"], "rollouts evaluated": self.versions[i]["visits"] * group_size}
                     for i in range(len(self.versions))
                 },
             )
