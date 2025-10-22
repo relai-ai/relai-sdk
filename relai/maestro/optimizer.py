@@ -437,7 +437,7 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
-        group_id = uuid4().hex
+        group_id = "Maestro-Config-" + uuid4().hex
         pbar = tqdm(total=total_rollouts, desc="Total rollouts consumed for config optimization")
 
         for round in range(num_rounds):
@@ -601,7 +601,7 @@ class Maestro:
 
         print("optimize_structure settings:")
         print("  total_rollouts: ", total_rollouts)
-        print("-" * 60 + "\n\n")
+        print("=" * 80 + "\n\n")
 
         if code_paths is not None:
             code = extract_code(code_paths=code_paths)
@@ -612,9 +612,10 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
-        group_id = uuid4().hex
+        group_id = "Maestro-Struct-" + uuid4().hex
 
-        print("Running the agent to collect traces...")
+        print("=" * 80)
+        print("Running the agent to collect traces...\n\n")
 
         setups = sampler.sample(total_rollouts)
         awaitables = []
@@ -627,7 +628,8 @@ class Maestro:
 
         test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
 
-        print("Optimizing structure...")
+        print("=" * 80)
+        print("Optimizing structure...\n\n")
         suggestion = await self._client.optimize_structure(
             {
                 "agent_name": get_full_func_name(self.agent_fn),

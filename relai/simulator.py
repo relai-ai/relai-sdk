@@ -213,7 +213,7 @@ class SyncSimulator(BaseSimulator):
                 a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex if group_id is None else group_id
+        group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
         tracking_on()
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
@@ -248,7 +248,7 @@ class SyncSimulator(BaseSimulator):
                 a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex if group_id is None else group_id
+        group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
         tracking_on()
         for tape in simulation_tapes:
             new_tape = tape.copy()
@@ -312,7 +312,7 @@ class AsyncSimulator(BaseSimulator):
                 a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex if group_id is None else group_id
+        group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
         tracking_on()
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
@@ -347,7 +347,7 @@ class AsyncSimulator(BaseSimulator):
                 a new UUID will be generated.
         """
         agent_logs: list[AgentLog] = []
-        group_id = uuid4().hex if group_id is None else group_id
+        group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
         tracking_on()
         for tape in simulation_tapes:
             new_tape = tape.copy()

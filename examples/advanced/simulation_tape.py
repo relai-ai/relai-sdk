@@ -68,15 +68,17 @@ async def agent_fn(tape: SimulationTape):
     input = await get_user_input()
     messages = [{"role": "user", "content": input}]
     response = ""
-    while "[GOOD]" not in input and "[BAD]" not in input:
-        print("User:", input)  # Debug print
+    turns = 0
+    while "[GOOD]" not in input and "[BAD]" not in input and turns < 3:
+        turns += 1
+        # print("User:", input)  # Debug print
         tape.agent_inputs["user_text"] = input  # trace inputs for later auditing
         time_start = time.perf_counter()
         response = await chat_agent(messages)
         time_end = time.perf_counter()
         total_response_time += time_end - time_start
         input = await get_user_input(response)
-        print("Agent:", response)  # Debug print
+        # print("Agent:", response)  # Debug print
         messages.extend([{"role": "assistant", "content": response}, {"role": "user", "content": input}])
 
     # ============================================================================
@@ -134,7 +136,8 @@ class ConversationEvaluator(Evaluator):
             score = 0.0
             feedback = "The agent could do better."
         else:
-            raise ValueError("Final user message should contain either [GOOD] or [BAD].")
+            score = 0.5
+            feedback = "The conversation ended without clear feedback."
 
         # Step 2: Utilize the recorded total response time for additional evaluation
         if total_response_time > 10:
@@ -197,7 +200,7 @@ async def main():
             batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
         params.save("saved_config.json")  # save optimized params for future usage
 
@@ -205,7 +208,7 @@ async def main():
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
             code_paths=["simulation_tape.py"],  # A list of paths corresponding to code implementations of the agent.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
 
 
