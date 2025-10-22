@@ -414,7 +414,7 @@ class Maestro:
         num_rounds: int = int(total_rollouts / (iterate_steps * group_size * 4 + select_steps * group_size))
         total_rollouts = num_rounds * (iterate_steps * group_size * 4 + select_steps * group_size)
 
-        print("optimize_config settings:")
+        print("\n" + "=" * 30 + "optimize_config settings" + "=" * 30)
         print("  total_rollouts: ", total_rollouts)
         print("  (adjusted) batch_size: ", group_size * 2)
         print("  explore_radius: ", explore_radius)
@@ -608,7 +608,7 @@ class Maestro:
             str: Suggestion for structural changes to the agent.
         """
 
-        print("optimize_structure settings:")
+        print("\n" + "=" * 30 + "optimize_structure settings" + "=" * 30)
         print("  total_rollouts: ", total_rollouts)
         print("=" * 80 + "\n\n")
 
