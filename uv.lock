@@ -1011,7 +1011,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "1.45.0"
+version = "1.46.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1023,9 +1023,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/77/776b92f6f7cf7d7d3bc77b44a323605ae0f94f807cf9a4977c90d296b6b4/google_genai-1.45.0.tar.gz", hash = "sha256:96ec32ae99a30b5a1b54cb874b577ec6e41b5d5b808bf0f10ed4620e867f9386", size = 238198, upload-time = "2025-10-15T23:03:07.713Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/2d/d5907af6a46fb0b660291a09bb62f9cbc1365899f7d64a74e7d8d2e056c2/google_genai-1.46.0.tar.gz", hash = "sha256:6824c31149fe3b1c7285b25f79b924c5f89fd52466f62e30f76954f8104fe3a7", size = 239561, upload-time = "2025-10-21T22:55:04.241Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/8f/922116dabe3d0312f08903d324db6ac9d406832cf57707550bc61151d91b/google_genai-1.45.0-py3-none-any.whl", hash = "sha256:e755295063e5fd5a4c44acff782a569e37fa8f76a6c75d0ede3375c70d916b7f", size = 238495, upload-time = "2025-10-15T23:03:05.926Z" },
+    { url = "https://files.pythonhosted.org/packages/db/79/8993ec6cbf56e5c8f88c165380e55de34ec74f7b928bc302ff5c370f9c4e/google_genai-1.46.0-py3-none-any.whl", hash = "sha256:879c4a260d630db0dcedb5cc84a9d7b47acd29e43e9dc63541b511b757ea7296", size = 239445, upload-time = "2025-10-21T22:55:03.072Z" },
 ]
 
 [[package]]
@@ -1309,16 +1309,16 @@ wheels = [
 
 [[package]]
 name = "langchain"
-version = "1.0.1"
+version = "1.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
     { name = "langgraph" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/51/486fd45e5d5706898f49aeb6b544c78481c825fc2e15d63b65f8f6a42a09/langchain-1.0.1.tar.gz", hash = "sha256:8bf60e096ca9c06626d9161a46651405ef1d12b5863f7679283666f83f760dc5", size = 467461, upload-time = "2025-10-20T13:07:00.317Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/d6/bdf9ea27a92ed4685497c2659b5c7f703ba63bac4bd92351ca09bab3b924/langchain-1.0.2.tar.gz", hash = "sha256:22f814c7b4f5f76e945c35924ff288f6dfbe33747db2a029162ef1d4f8566493", size = 473869, upload-time = "2025-10-21T21:08:26.44Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/64/ee846eab0d43ba8b61eed60ac923b7dcde1639e4ae5c1a1895e8a87fe32d/langchain-1.0.1-py3-none-any.whl", hash = "sha256:48fd616413fee4843f12cad49e8b74ad6fc159640142ca885d03bd925cd24503", size = 106754, upload-time = "2025-10-20T13:06:58.881Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/06/0e03587da37173c29a58bf17312793c2453df9ca2912e9adfe869c120437/langchain-1.0.2-py3-none-any.whl", hash = "sha256:e0c5647ea47cde7feb9534f56f4496c7f86a45084ad9bd152e7b19739f210ead", size = 107831, upload-time = "2025-10-21T21:08:25.009Z" },
 ]
 
 [[package]]
@@ -1415,7 +1415,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.78.5"
+version = "1.78.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1431,9 +1431,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2d/5c/4d893ab43dd2fb23d3dae951c551bd529ab2e50c0f195e6b1bcfd4f41577/litellm-1.78.5.tar.gz", hash = "sha256:1f90a712c3e136e37bce98b3b839e40cd644ead8d90ce07257c7c302a58a4cd5", size = 10818833, upload-time = "2025-10-18T22:24:39.032Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/43/bb967d2e8c1a207bd4fa3476e2f6ec9579080c1f6471d134f59318533b57/litellm-1.78.6.tar.gz", hash = "sha256:80792b5064084b950841b195463770ac58d527c5ba4a7910bbb9da3e8d3b28cd", size = 10826730, upload-time = "2025-10-21T18:56:34.604Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/f6/6aeedf8c6e75bfca08b9c73385186016446e8286803b381fcb9cac9c1594/litellm-1.78.5-py3-none-any.whl", hash = "sha256:aa716e9f2dfec406f1fb33831f3e49bc8bc6df73aa736aae21790516b7bb7832", size = 9827414, upload-time = "2025-10-18T22:24:35.398Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/06/fd4c387565483ac98dd71be8ad4c8f630264ed6e739472324f149de6f871/litellm-1.78.6-py3-none-any.whl", hash = "sha256:53f79b64d4a38644ba2bef97d984193b147d758f6f4e34ba466a06ec913ef4fe", size = 9836778, upload-time = "2025-10-21T18:56:30.599Z" },
 ]
 
 [[package]]
@@ -3001,7 +3001,7 @@ wheels = [
 
 [[package]]
 name = "relai"
-version = "0.3.3"
+version = "0.3.4"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp", extra = ["speedups"] },
