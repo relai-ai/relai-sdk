@@ -11,7 +11,6 @@
 import asyncio
 
 from google import genai
-from google.genai import types
 
 from relai import (
     AgentLog,
@@ -21,12 +20,9 @@ from relai import (
     EvaluatorLog,
     SimulationTape,
 )
-
 from relai.benchmark import CSVBenchmark
-from relai.simulator import simulated
 from relai.critico import Critico
 from relai.critico.evaluate import Evaluator
-from relai.logger import tracer_provider
 from relai.maestro import Maestro, params, register_param
 
 # ============================================================================
