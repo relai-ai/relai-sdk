@@ -22,7 +22,6 @@ from relai.mocker import MockTool, Persona
 from relai.simulator import simulated
 
 AGENT_NAME = "Weather Bot"
-MODEL = "gemini-2.5-flash"  # swap as needed
 
 # ============================================================================
 # STEP 1 — Decorate inputs/tools that will be simulated

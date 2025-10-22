@@ -91,16 +91,22 @@ register_param(
 
 
 async def agent_fn(tape: SimulationTape) -> AgentOutputs:
-    question = await get_user_query()
-    agent = Agent(
-        name="Stock assistant",
-        instructions=params.prompt,  # access registered parameter
-        model="gpt-5-mini",
-    )
-    result = await Runner.run(agent, question)
-    tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)": 1.0}
-    tape.agent_inputs["question"] = question  # trace inputs for later auditing
-    return {"summary": result.final_output}
+    # It is good practice to catch exceptions in agent function
+    # especially if the agent might raise errors with different configs
+    try:
+        question = await get_user_query()
+        agent = Agent(
+            name="Stock assistant",
+            instructions=params.prompt,  # access registered parameter
+            model="gpt-5-mini",
+        )
+        result = await Runner.run(agent, question)
+        tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)": 1.0}
+        tape.agent_inputs["question"] = question  # trace inputs for later auditing
+        return {"summary": result.final_output}
+    except Exception as e:
+        return {"summary": str(e)}
+    
 
 
 async def main() -> None:
