@@ -196,7 +196,7 @@ async def main():
         critico.add_evaluators(evaluators={ConversationEvaluator(mode="rigid"): 1}, evaluator_group="slow")
 
         # OPTIMIZE with Maestro
-        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Summarization Agent")
+        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Evaluator Group Example")
         maestro.add_setup(simulator=simulator, critico=critico)
 
         # Optimize agent configurations (the parameters registered previously)
