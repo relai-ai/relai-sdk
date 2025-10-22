@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from agents import Agent, Runner, SQLiteSession
 
+from ..utils import no_trace
 from .base_mocker import BaseMocker
 
 
@@ -48,12 +49,12 @@ class MockTool(BaseMocker):
                 "kwargs": kwargs,
             }
         )
-
-        result = Runner.run_sync(
-            self.agent,
-            agent_input,
-            session=self._session,
-        )
+        with no_trace():
+            result = Runner.run_sync(
+                self.agent,
+                agent_input,
+                session=self._session,
+            )
         output = result.final_output
         return output
 
@@ -64,11 +65,11 @@ class MockTool(BaseMocker):
                 "kwargs": kwargs,
             }
         )
-
-        result = await Runner.run(
-            self.agent,
-            agent_input,
-            session=self._session,
-        )
+        with no_trace():
+            result = await Runner.run(
+                self.agent,
+                agent_input,
+                session=self._session,
+            )
         output = result.final_output
         return output
