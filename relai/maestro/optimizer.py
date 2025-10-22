@@ -160,7 +160,7 @@ class Maestro:
             return str(agent_outputs)
 
     async def _evaluate(
-        self, awaitables: list[Awaitable], criticos: list[Critico], verbose: bool = False, print_flag: str = ""
+        self, awaitables: list[Awaitable], criticos: list[Critico], verbose: bool = True, print_flag: str = ""
     ) -> tuple[list[dict[str, Any]], list[AgentLog]]:
         """
         Run and evaluate the current version of the agent through a set of awaitables.
@@ -169,7 +169,7 @@ class Maestro:
             awaitables (list[Awaitable]): A list of awaitables, each representing a run of the agent
             criticos (list[Critico]): A list of Critico objects, each corresponding to an awaitable
             verbose (bool): If True, additional information will be printed during evaluation.
-                Defaults to False.
+                Defaults to True.
             print_flag (str): A string to be put next to the printed info when `verbose` is True.
                 Used to distinguish printed info from different types of evaluations.
 
@@ -227,7 +227,7 @@ class Maestro:
         self,
         batch_size: int,
         sampler: ProportionalSampler,
-        verbose: bool = False,
+        verbose: bool = True,
         group_id: str | None = None,
         pbar: tqdm | None = None,
     ) -> bool:
@@ -244,7 +244,7 @@ class Maestro:
                 `batch_size` of them will be used for preliminary examinations.
             sampler (ProportionalSampler): Sampler to use for selecting setups.
             verbose (bool): If True, additional information will be printed during the iterate step.
-                Defaults to False.
+                Defaults to True.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
             pbar (tqdm, optional): A progress bar to display the progress of the iteration. Defaults to None.
@@ -376,7 +376,7 @@ class Maestro:
         batch_size: int = 8,
         explore_radius: int = 5,
         explore_factor: float = 0.5,
-        verbose: bool = False,
+        verbose: bool = True,
     ):
         """
         Optimize the configs (parameters) of the agent.
@@ -392,7 +392,7 @@ class Maestro:
                 while a lower value allocates more rollouts to ensure the discovered configs are thoroughly evaluated.
                 Defaults to 0.5.
             verbose (bool): If True, related information will be printed during the optimization step.
-                Defaults to False.
+                Defaults to True.
 
         Raises:
             ValueError: If the input parameters are not valid.
@@ -414,7 +414,7 @@ class Maestro:
         num_rounds: int = int(total_rollouts / (iterate_steps * group_size * 4 + select_steps * group_size))
         total_rollouts = num_rounds * (iterate_steps * group_size * 4 + select_steps * group_size)
 
-        print("optimize_config settings:")
+        print("\n" + "=" * 30 + "optimize_config settings" + "=" * 30)
         print("  total_rollouts: ", total_rollouts)
         print("  (adjusted) batch_size: ", group_size * 2)
         print("  explore_radius: ", explore_radius)
@@ -577,7 +577,10 @@ class Maestro:
             if self.log_to_platform:
                 await sync_to_platform()
                 print(
-                    f"Results of round {round + 1}/{num_rounds} uploaded to RELAI platform, visualization id: {self.config_opt_viz_id}"
+                    (
+                        f"Results of round {round + 1}/{num_rounds} uploaded to RELAI platform, "
+                        f"visualization id: {self.config_opt_viz_id}\n\n\n"
+                    )
                 )
 
     async def optimize_structure(
@@ -585,7 +588,7 @@ class Maestro:
         total_rollouts: int,
         description: Optional[str] = None,
         code_paths: Optional[list[str]] = None,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> str:
         """
         Propose structural changes (i.e. changes that cannot be achieved by setting parameters alone) to
@@ -599,13 +602,13 @@ class Maestro:
             code_paths (list[str], optional): A list of paths corresponding to code files containing
                 the implementation of the agent.
             verbose (bool): If True, additional information will be printed during the optimization.
-                Defaults to False.
+                Defaults to True.
 
         Returns:
             str: Suggestion for structural changes to the agent.
         """
 
-        print("optimize_structure settings:")
+        print("\n" + "=" * 30 + "optimize_structure settings" + "=" * 30)
         print("  total_rollouts: ", total_rollouts)
         print("=" * 80 + "\n\n")
 
@@ -674,6 +677,6 @@ class Maestro:
 
         if self.log_to_platform:
             uid = await sync_to_platform()
-            print(f"Results uploaded to RELAI platform, visualization id: {uid}")
+            print(f"Results uploaded to RELAI platform, visualization id: {uid}\n\n\n")
 
         return suggestion

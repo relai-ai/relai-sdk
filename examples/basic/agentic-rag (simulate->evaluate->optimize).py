@@ -169,7 +169,7 @@ async def main() -> None:
             batch_size=4,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=3,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
-            verbose=False,  # If True, additional information will be printed during the optimization step.
+            verbose=True,  # If True, additional information will be printed during the optimization step.
         )
         params.save("saved_config.json")  # save optimized params for future usage
 
