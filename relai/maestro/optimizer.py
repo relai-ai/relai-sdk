@@ -442,11 +442,10 @@ class Maestro:
 
         for round in range(num_rounds):
             print("=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
-            print("Total versions: ", len(self.versions))
+            print("Total versions accepted: ", len(self.versions))
             print("Rebase to version: ", self.current_version)
-            print("Score (current base): ", self.versions[self.current_version]["average_score"])
-            print("Visits (current base): ", self.versions[self.current_version]["visits"])
-            print("Visits (total): ", self.total_visits)
+            print("Evaluation score for the current base version: ", self.versions[self.current_version]["average_score"])
+            print("Number of evaluation rollouts for the current base version: ", self.versions[self.current_version]["visits"])
             print("\n\n")
 
             new_version = False
@@ -521,11 +520,10 @@ class Maestro:
             await self._select(explore=False)
 
             print("=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
-            print("Total versions: ", len(self.versions))
-            print("Best version: ", self.current_version)
-            print("Score (best version): ", self.versions[self.current_version]["average_score"])
-            print("Visits (best version): ", self.versions[self.current_version]["visits"])
-            print("Visits (total): ", self.total_visits)
+            print("Total versions accepted: ", len(self.versions))
+            print("Best version index: ", self.current_version)
+            print("Evaluation score for the best version: ", self.versions[self.current_version]["average_score"])
+            print("Number of evaluation rollouts for the best version: ", self.versions[self.current_version]["visits"])
 
             print(
                 "all versions: ",
