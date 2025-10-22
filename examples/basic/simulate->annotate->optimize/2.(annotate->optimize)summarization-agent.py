@@ -1,6 +1,11 @@
 # ------------------------------------------------------------
 # continues from `1.(simulate->annotate)summarization-agent.py`
 
+# Here we demonstrate with a simple summarization agent:
+# 1. (previously) How to run agents in a simulated environment and collect simulation traces/runs.
+# 2. (previously) How to annotate the simulation runs on RELAI platform (platform.relai.ai) and create an Annotation Benchmark
+# 3. How to optimize the agent over an annotation benchmark.
+
 import asyncio
 
 from agents import Agent, Runner
@@ -55,7 +60,8 @@ async def agent_fn(tape: SimulationTape):
 # 5.1 — Load your annotation benchmark created in STEP 4.3 of
 # `1.(simulate->annotate)summarization-agent.py`
 benchmark = RELAIAnnotationBenchmark(
-    benchmark_id="benchmark ID for your annotation benchmark"
+    #benchmark_id="benchmark ID for your annotation benchmark"
+    benchmark_id="benchmark-b3e3ce09bab945c19a24823de8b32306"
 )  # replace with your benchmark ID
 for sample in benchmark.samples:
     print(sample)  # inspect loaded benchmark samples
@@ -102,7 +108,7 @@ async def main():
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
             verbose=True,  # If True, related information will be printed during the optimization step.

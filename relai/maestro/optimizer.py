@@ -374,7 +374,7 @@ class Maestro:
     async def optimize_config(
         self,
         total_rollouts: int,
-        batch_size: int = 4,
+        batch_size: int = 8,
         explore_radius: int = 5,
         explore_factor: float = 0.5,
         verbose: bool = False,
@@ -384,7 +384,7 @@ class Maestro:
 
         Args:
             total_rollouts (int): Total number of rollouts to use for optimization.
-            batch_size (int): Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size (int): Base batch size to use for individual optimization steps. Defaults to 8.
             explore_radius (int): A positive integer controlling the aggressiveness of exploration during optimization.
                 A larger `explore_radius` encourages the optimizer to make more substantial changes between successive configurations.
                 Defaults to 5.
@@ -407,16 +407,18 @@ class Maestro:
         if explore_factor <= 0 or explore_factor >= 1:
             raise ValueError(f"`explore_factor` must be a float between 0 and 1, got {explore_factor}.")
 
-        # total_rollouts = (iterate_steps * batch_size * 4 + select_steps * batch_size) * num_rounds
-        # explore_factor = (iterate_steps * batch_size * 4) / (iterate_steps * batch_size * 4 + select_steps * batch_size)
+
+        group_size = (batch_size + 1) // 2
+        # total_rollouts = (iterate_steps * group_size * 4 + select_steps * group_size) * num_rounds
+        # explore_factor = (iterate_steps * group_size * 4) / (iterate_steps * group_size * 4 + select_steps * group_size)
         iterate_steps: int = explore_radius
         select_steps: int = int(explore_radius * 4 * (1 - explore_factor) / explore_factor)
-        num_rounds: int = int(total_rollouts / (iterate_steps * batch_size * 4 + select_steps * batch_size))
-        total_rollouts = num_rounds * (iterate_steps * batch_size * 4 + select_steps * batch_size)
+        num_rounds: int = int(total_rollouts / (iterate_steps * group_size * 4 + select_steps * group_size))
+        total_rollouts = num_rounds * (iterate_steps * group_size * 4 + select_steps * group_size)
 
         print("optimize_config settings:")
         print("  total_rollouts: ", total_rollouts)
-        print("  batch_size: ", batch_size)
+        print("  (adjusted) batch_size: ", group_size * 2)
         print("  explore_radius: ", explore_radius)
         print("  explore_factor: ", explore_factor)
         print("-" * 60)
@@ -428,7 +430,7 @@ class Maestro:
         if num_rounds == 0:
             raise ValueError(
                 f"`total_rollouts` is too small for the given `batch_size` {batch_size}, `explore_radius` {explore_radius}, and `explore_factor` {explore_factor}. "
-                f"Please increase `total_rollouts` to at least {iterate_steps * batch_size * 4 + select_steps * batch_size}."
+                f"Please increase `total_rollouts` to at least {iterate_steps * group_size * 4 + select_steps * group_size}."
             )
 
         sampler = ProportionalSampler(
@@ -450,7 +452,7 @@ class Maestro:
             new_version = False
             for _ in range(iterate_steps):
                 changes_accepted = await self._iterate(
-                    batch_size=batch_size, verbose=verbose, sampler=sampler, group_id=group_id, pbar=pbar
+                    batch_size=group_size, verbose=verbose, sampler=sampler, group_id=group_id, pbar=pbar
                 )
                 if changes_accepted:
                     new_version = True
@@ -474,7 +476,7 @@ class Maestro:
             for _ in range(select_steps):
                 await self._select(explore=True)
 
-                setups = sampler.sample(batch_size)
+                setups = sampler.sample(group_size)
                 awaitables = []
                 criticos = []
                 for setup in setups:

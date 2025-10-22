@@ -4,6 +4,10 @@
 #   pip install relai                       # relai
 #   pip install langchain                   # langchain
 #   pip install langchain-openai            # langchain-openai
+#
+# Here we demonstrate with a simple chat agent:
+# How to use simulation tape to record arbitrary additional information during simulation 
+# for evaluating/optimizing latency, intermediate steps, etc.).
 
 import asyncio
 import time
@@ -190,7 +194,7 @@ async def main():
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
             verbose=True,  # If True, related information will be printed during the optimization step.

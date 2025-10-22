@@ -4,6 +4,9 @@
 #   pip install relai                       # relai
 #   pip install langchain                   # langchain
 #   pip install langchain-openai            # langchain-openai
+#
+# Here we demonstrate with a simple chat agent:
+# How to utilize customized logging for more efficient optimization.
 
 import asyncio
 from collections.abc import Callable
@@ -73,7 +76,9 @@ async def agent_fn(tape: SimulationTape):
     input = await get_user_input()
     messages = [{"role": "user", "content": input}]
     response = ""
-    while "[GOOD]" not in input and "[BAD]" not in input:
+    turns = 0
+    while "[GOOD]" not in input and "[BAD]" not in input and turns < 3:
+        turns += 1
         print("User:", input)  # Debug print
         tape.agent_inputs["user_text"] = input  # trace inputs for later auditing
         response = await chat_agent(messages)
@@ -128,7 +133,8 @@ class ConversationEvaluator(Evaluator):
             score = 0.0
             feedback = "The agent could do better."
         else:
-            raise ValueError("Final user message should contain either [GOOD] or [BAD].")
+            score = 0.5
+            feedback = "The conversation ended without clear feedback."
 
         return EvaluatorLog(
             evaluator_id=self.uid,
@@ -183,7 +189,7 @@ async def main():
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
             verbose=True,  # If True, related information will be printed during the optimization step.

@@ -3,6 +3,11 @@
 #   export OPENAI_API_KEY="sk-..."          # if your agent/tool uses OpenAI
 #   pip install relai                   # relai
 #   pip install openinference-instrumentation-openai-agents  # optional automatic tracing for openai agents SDK
+# 
+# Here we demonstrate with a simple summarization agent:
+# 1. How to run agents in a simulated environment and collect simulation traces/runs.
+# 2. How to annotate the simulation runs on RELAI platform (platform.relai.ai) and create an Annotation Benchmark
+# 3. (next on `2.(annotate->optimize)summarization-agent.py`) How to optimize the agent over an annotation benchmark.
 
 import asyncio
 
@@ -102,9 +107,10 @@ async def main():
     # 4.3 — ANNOTATE
     # Go to RELAI platform (platform.relai.ai) under ->Results->Runs,
     # click on individual runs to:
-    # 1. view and provide feedback to the simulation runs you just executed
+    # 1. view and provide feedback to the simulation runs you just executed. 
     # 2. create an Annotation Benchmark from these runs for future optimization
-    #    with the "Add to Benchmark" button at the bottom.
+    #    with the "Add to Benchmark" button at the bottom. (IMPORTANT: Make sure
+    #    only runs corresponding to the current task are included in the benchmark.
 
     # 4.4 — OPTIMIZE -> See `2.(annotate->optimize)summarization-agent.py` for next steps
 

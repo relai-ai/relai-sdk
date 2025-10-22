@@ -2,6 +2,9 @@
 # Prereqs:
 #   export GEMINI_API_KEY="AI..."          # if your agent/tool uses Gemini
 #   pip install relai                  # relai
+#
+# Here we demonstrate with a simple weather bot agent:
+# How to run agents in a simulated environment.
 
 import asyncio
 
