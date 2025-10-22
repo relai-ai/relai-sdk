@@ -3,7 +3,7 @@
 Annotation benchmarks are benchmarks created by annotating (providing feedback to) runs of agents. 
 They can be used directly in agent optimization (configs, structure). 
 For a detailed example of how to run agents in a simulated environment and 
-how to use annotation benchmarks in agent optimization, see [simulate->annotate->optimze](/examples/basic/simulate->annotate->optimize/).
+how to use annotation benchmarks in agent optimization, see [summarization-agent (simulate→annotate→optimize)-part-1.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-1.py) and [summarization-agent (simulate→annotate→optimize)-part-2.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-2.py).
 
 <h2>Create Annotation Benchmark</h2>
 
@@ -24,5 +24,5 @@ how to use annotation benchmarks in agent optimization, see [simulate->annotate-
 
     <img src="../assets/tutorials/annotation-benchmark/4.png" alt="Add the annotated run to a benchmark."/>
 
-5. Continue to annotate and add other runs to the benchmark. The benchmark is already ready-to-use with its benchmark id. See [simulate->annotate->optimze](https://github.com/relai-ai/relai-sdk/tree/main/examples/basic/simulate-%3Eannotate-%3Eoptimize/) for how to use annotation benchmarks in 
+5. Continue to annotate and add other runs to the benchmark. The benchmark is already ready-to-use with its benchmark id. See [summarization-agent (simulate→annotate→optimize)-part-1.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-1.py) and [summarization-agent (simulate→annotate→optimize)-part-2.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-2.py) for how to use annotation benchmarks in 
 agent optimization.

@@ -7,7 +7,7 @@
 # Here we demonstrate with a simple summarization agent:
 # 1. How to run agents in a simulated environment and collect simulation traces/runs.
 # 2. How to annotate the simulation runs on RELAI platform (platform.relai.ai) and create an Annotation Benchmark
-# 3. (next on `2.(annotate->optimize)summarization-agent.py`) How to optimize the agent over an annotation benchmark.
+# 3. (next on `summarization-agent (simulate->annotate->optimize)-part-2.py`) How to optimize the agent over an annotation benchmark.
 
 import asyncio
 

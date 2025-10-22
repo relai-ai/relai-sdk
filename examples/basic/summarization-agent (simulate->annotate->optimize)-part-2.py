@@ -1,5 +1,5 @@
 # ------------------------------------------------------------
-# continues from `1.(simulate->annotate)summarization-agent.py`
+# continues from `summarization-agent (simulate->annotate->optimize)-part-1.py`
 
 # Here we demonstrate with a simple summarization agent:
 # 1. (previously) How to run agents in a simulated environment and collect simulation traces/runs.
@@ -60,8 +60,7 @@ async def agent_fn(tape: SimulationTape):
 # 5.1 — Load your annotation benchmark created in STEP 4.3 of
 # `1.(simulate->annotate)summarization-agent.py`
 benchmark = RELAIAnnotationBenchmark(
-    #benchmark_id="benchmark ID for your annotation benchmark"
-    benchmark_id="benchmark-b3e3ce09bab945c19a24823de8b32306"
+    benchmark_id="benchmark ID for your annotation benchmark"
 )  # replace with your benchmark ID
 for sample in benchmark.samples:
     print(sample)  # inspect loaded benchmark samples
