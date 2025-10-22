@@ -24,5 +24,4 @@ how to use annotation benchmarks in agent optimization, see [summarization-agent
 
     <img src="../assets/tutorials/annotation-benchmark/4.png" alt="Add the annotated run to a benchmark."/>
 
-5. Continue to annotate and add other runs to the benchmark. The benchmark is already ready-to-use with its benchmark id. See [summarization-agent (simulate→annotate→optimize)-part-1.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-1.py) and [summarization-agent (simulate→annotate→optimize)-part-2.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-2.py) for how to use annotation benchmarks in 
-agent optimization.
+5. Continue to annotate and add other runs to the benchmark. The benchmark is already ready-to-use with its benchmark id. See [summarization-agent (simulate→annotate→optimize)-part-1.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-1.py) and [summarization-agent (simulate→annotate→optimize)-part-2.py](/examples/basic/summarization-agent%20(simulate-%3Eannotate-%3Eoptimize)-part-2.py) for how to use annotation benchmarks in agent optimization.
