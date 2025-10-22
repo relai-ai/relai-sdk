@@ -439,7 +439,7 @@ class Maestro:
         pbar = tqdm(total=total_rollouts, desc="Total rollouts consumed for config optimization")
 
         for round in range(num_rounds):
-            print("=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
+            print("\n\n" + "=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
             print("Total versions accepted: ", len(self.versions))
             print("Rebase to version: ", self.current_version)
             print(
@@ -522,7 +522,7 @@ class Maestro:
             # Switch to the current version with highest score
             await self._select(explore=False)
 
-            print("=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
+            print("\n\n" + "=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
             print("Total versions accepted: ", len(self.versions))
             print("Best version index: ", self.current_version)
             print(
