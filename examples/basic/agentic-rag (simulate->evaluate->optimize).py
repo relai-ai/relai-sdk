@@ -3,6 +3,11 @@
 #   export OPENAI_API_KEY="sk-..."          # if your agent/tool uses OpenAI
 #   pip install relai                   # relai
 #   pip install openinference-instrumentation-openai-agents  # optional tracing
+#
+# Here we demonstrate with a simple agentic RAG (Retrieval-Augmented Generation) agent:
+# 1. How to run agents in a simulated environment and collect simulation traces/runs.
+# 2. How to evaluate the agent's performance with custom evaluators.
+# 3. How to optimize the agent based on the simulation and evaluation.
 
 import asyncio
 import re
@@ -161,18 +166,18 @@ async def main() -> None:
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=80,  # Total number of rollouts to use for optimization.
-            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size=4,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=3,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
         params.save("saved_config.json")  # save optimized params for future usage
 
         # 5.4.2 — Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
-            total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["agentic-rag.py"],  # A list of paths corresponding to code implementations of the agent.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            total_rollouts=5,  # Total number of rollouts to use for optimization.
+            code_paths=["agentic-rag (simulate->evaluate->optimize).py"],  # A list of paths corresponding to code implementations of the agent.
+            verbose=True,  # If True, additional information will be printed during the optimization step.
         )
 
 

@@ -4,10 +4,14 @@
 #   pip install relai                       # relai
 #   pip install langchain                   # langchain
 #   pip install langchain-openai            # langchain-openai
+#
+# Here we demonstrate with a simple chat agent:
+# How to use different evaluators based on arbitrary criteria for agent optimization through the use of evaluator groups.
 
 import asyncio
 import time
 from collections.abc import Callable
+from typing import Literal
 
 from langchain.agents import create_agent
 
@@ -62,26 +66,29 @@ async def agent_fn(tape: SimulationTape):
     total_response_time = 0
 
     input = await get_user_input()
-    messages = [{"role": "user", "content": input}]
     response = ""
-    while "[GOOD]" not in input and "[BAD]" not in input:
-        print("User:", input)  # Debug print
+    messages = [{"role": "user", "content": input}]
+    turns = 0
+    while "[GOOD]" not in input and "[BAD]" not in input and turns < 3:
+        turns += 1
+        # print("User:", input)  # Debug print
         tape.agent_inputs["user_text"] = input  # trace inputs for later auditing
         time_start = time.perf_counter()
         response = await chat_agent(messages)
         time_end = time.perf_counter()
         total_response_time += time_end - time_start
         input = await get_user_input(response)
-        print("Agent:", response)  # Debug print
+        # print("Agent:", response)  # Debug print
         messages.extend([{"role": "assistant", "content": response}, {"role": "user", "content": input}])
 
-    # ============================================================================
-    # Step 1: Use simulation tape to record any additional information for
-    # evaluation. Here we record the full conversation trajectory, and also the
-    # total time taken by the agent to respond.
-    # ============================================================================
     tape.add_record("conversation", messages)  # record full trajectory in tape for evaluation
-    tape.add_record("total_response_time", total_response_time)  # record total response time
+    # ============================================================================
+    # STEP 2: One can set the evaluator group based on any criteria on the fly,
+    # and the evaluators added to Critico with the respective group will be used
+    # for evaluation automatically.
+    # ============================================================================
+    tape.set_evaluator_group("slow" if total_response_time > 10 else "fast")
+
     return {"response": response}
 
 
@@ -90,21 +97,21 @@ class ConversationEvaluator(Evaluator):
     A custom evaluator for a conversation.
     """
 
-    def __init__(
-        self,
-        transform: Callable | None = None,
-    ):
+    def __init__(self, transform: Callable | None = None, mode: Literal["rigid", "lenient"] = "rigid"):
         """
         Initialize the custom sentiment evaluator.
 
         Args:
             transform: Optional function to transform agent outputs
+            mode: Evaluation mode, either "rigid" or "lenient".
         """
         super().__init__(
             name="conversation-evaluator",
             # Specify required fields from the benchmark and agent response
-            required_fields=["conversation", "total_response_time"],
+            required_fields=["conversation"],
             transform=transform,
+            # Store configuration as hyperparameters
+            mode=mode,
         )
 
     async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:
@@ -120,22 +127,17 @@ class ConversationEvaluator(Evaluator):
         """
         # Extract required fields from different sources
         conversation = agent_log.simulation_tape.extras["conversation"]
-        total_response_time = agent_log.simulation_tape.extras["total_response_time"]
         final_user_message = conversation[-1]["content"]
 
         if "[GOOD]" in final_user_message:
             score = 1.0
             feedback = "The agent was helpful."
         elif "[BAD]" in final_user_message:
-            score = 0.0
+            score = 0.0 if self.hyperparameters["mode"] == "rigid" else 0.5
             feedback = "The agent could do better."
         else:
-            raise ValueError("Final user message should contain either [GOOD] or [BAD].")
-
-        # Step 2: Utilize the recorded total response time for additional evaluation
-        if total_response_time > 10:
-            score -= 0.1  # penalize for long response time
-            feedback += f" However, the agent took too long to respond: {total_response_time:.2f} seconds."
+            score = 0.5
+            feedback = "The conversation ended without clear feedback."
 
         return EvaluatorLog(
             evaluator_id=self.uid,
@@ -179,29 +181,40 @@ async def main():
         agent_logs = await simulator.run(num_runs=1)
         print(agent_logs)
 
+        # ============================================================================
+        # STEP 1: One can add multiple evaluators with different weights to
+        # different evaluator groups.
+        # Evaluators added without specifying a group will be added to the default
+        # group, which is used for all runs with default evaluator group (i.e., no
+        # evaluator group set in the simulation tape via set_evaluator_group).
+        # ============================================================================
         critico = Critico(client=client)
-        critico.add_evaluators(evaluators={ConversationEvaluator(): 1})
+        critico.add_evaluators(
+            evaluators={ConversationEvaluator(mode="lenient"): 1, ConversationEvaluator(mode="rigid"): 0.5},
+            evaluator_group="fast",
+        )
+        critico.add_evaluators(evaluators={ConversationEvaluator(mode="rigid"): 1}, evaluator_group="slow")
 
         # OPTIMIZE with Maestro
-        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Summarization Agent")
+        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Evaluator Group Example")
         maestro.add_setup(simulator=simulator, critico=critico)
 
         # Optimize agent configurations (the parameters registered previously)
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
         params.save("saved_config.json")  # save optimized params for future usage
 
         # Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["simulation_tape.py"],  # A list of paths corresponding to code implementations of the agent.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            code_paths=["chat-agent (advanced evaluation).py"],  # A list of paths corresponding to code implementations of the agent.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
 
 

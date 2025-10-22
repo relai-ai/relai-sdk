@@ -91,16 +91,22 @@ register_param(
 
 
 async def agent_fn(tape: SimulationTape) -> AgentOutputs:
-    question = await get_user_query()
-    agent = Agent(
-        name="Stock assistant",
-        instructions=params.prompt,  # access registered parameter
-        model="gpt-5-mini",
-    )
-    result = await Runner.run(agent, question)
-    tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)": 1.0}
-    tape.agent_inputs["question"] = question  # trace inputs for later auditing
-    return {"summary": result.final_output}
+    # It is good practice to catch exceptions in agent function
+    # especially if the agent might raise errors with different configs
+    try:
+        question = await get_user_query()
+        agent = Agent(
+            name="Stock assistant",
+            instructions=params.prompt,  # access registered parameter
+            model="gpt-5-mini",
+        )
+        result = await Runner.run(agent, question)
+        tape.extras["format_rubrics"] = {"Prices must include cents (eg: $XXX.XX)": 1.0}
+        tape.agent_inputs["question"] = question  # trace inputs for later auditing
+        return {"summary": result.final_output}
+    except Exception as e:
+        return {"summary": str(e)}
+    
 
 
 async def main() -> None:
@@ -140,10 +146,10 @@ async def main() -> None:
         # params.load("saved_config.json")  # load previous params if available
         await maestro.optimize_config(
             total_rollouts=20,  # Total number of rollouts to use for optimization.
-            batch_size=1,  # Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size=2,  # Base batch size to use for individual optimization steps. Defaults to 4.
             explore_radius=1,  # A positive integer controlling the aggressiveness of exploration during optimization.
             explore_factor=0.5,  # A float between 0 to 1 controlling the exploration-exploitation trade-off.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
         params.save("saved_config.json")  # save optimized params for future usage
 
@@ -154,7 +160,7 @@ async def main() -> None:
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
             code_paths=["stock-assistant.py"],  # A list of paths corresponding to code implementations of the agent.
-            verbose=True,  # If True, related information will be printed during the optimization step.
+            verbose=False,  # If True, additional information will be printed during the optimization step.
         )
 
 
@@ -181,6 +187,7 @@ Maestro is a holistic agent optimizer. It consumes evaluator/user feedback to im
 
 - 📘 **Documentation:** [docs.relai.ai](http://docs.relai.ai)
 - 🧪 **Examples:** [relai-sdk/examples](examples)
+- 📖 **Tutorials:** [docs.relai.ai/tutorials/index.html](https://docs.relai.ai/tutorials/index.html)
 - 🌐 **Website:** [relai.ai](https://relai.ai)
 - 📰 **Maestro Technical Report:** [ArXiV](https://arxiv.org/abs/2509.04642)
 - 🌐 **Join the Community:** [Discord](https://discord.gg/sjaHJ34YYE)

@@ -134,8 +134,7 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
-            + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -374,7 +373,7 @@ class Maestro:
     async def optimize_config(
         self,
         total_rollouts: int,
-        batch_size: int = 4,
+        batch_size: int = 8,
         explore_radius: int = 5,
         explore_factor: float = 0.5,
         verbose: bool = False,
@@ -384,7 +383,7 @@ class Maestro:
 
         Args:
             total_rollouts (int): Total number of rollouts to use for optimization.
-            batch_size (int): Base batch size to use for individual optimization steps. Defaults to 4.
+            batch_size (int): Base batch size to use for individual optimization steps. Defaults to 8.
             explore_radius (int): A positive integer controlling the aggressiveness of exploration during optimization.
                 A larger `explore_radius` encourages the optimizer to make more substantial changes between successive configurations.
                 Defaults to 5.
@@ -407,16 +406,17 @@ class Maestro:
         if explore_factor <= 0 or explore_factor >= 1:
             raise ValueError(f"`explore_factor` must be a float between 0 and 1, got {explore_factor}.")
 
-        # total_rollouts = (iterate_steps * batch_size * 4 + select_steps * batch_size) * num_rounds
-        # explore_factor = (iterate_steps * batch_size * 4) / (iterate_steps * batch_size * 4 + select_steps * batch_size)
+        group_size = (batch_size + 1) // 2
+        # total_rollouts = (iterate_steps * group_size * 4 + select_steps * group_size) * num_rounds
+        # explore_factor = (iterate_steps * group_size * 4) / (iterate_steps * group_size * 4 + select_steps * group_size)
         iterate_steps: int = explore_radius
         select_steps: int = int(explore_radius * 4 * (1 - explore_factor) / explore_factor)
-        num_rounds: int = int(total_rollouts / (iterate_steps * batch_size * 4 + select_steps * batch_size))
-        total_rollouts = num_rounds * (iterate_steps * batch_size * 4 + select_steps * batch_size)
+        num_rounds: int = int(total_rollouts / (iterate_steps * group_size * 4 + select_steps * group_size))
+        total_rollouts = num_rounds * (iterate_steps * group_size * 4 + select_steps * group_size)
 
         print("optimize_config settings:")
         print("  total_rollouts: ", total_rollouts)
-        print("  batch_size: ", batch_size)
+        print("  (adjusted) batch_size: ", group_size * 2)
         print("  explore_radius: ", explore_radius)
         print("  explore_factor: ", explore_factor)
         print("-" * 60)
@@ -428,29 +428,33 @@ class Maestro:
         if num_rounds == 0:
             raise ValueError(
                 f"`total_rollouts` is too small for the given `batch_size` {batch_size}, `explore_radius` {explore_radius}, and `explore_factor` {explore_factor}. "
-                f"Please increase `total_rollouts` to at least {iterate_steps * batch_size * 4 + select_steps * batch_size}."
+                f"Please increase `total_rollouts` to at least {iterate_steps * group_size * 4 + select_steps * group_size}."
             )
 
         sampler = ProportionalSampler(
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
-        group_id = uuid4().hex
+        group_id = "Maestro-Config-" + uuid4().hex
         pbar = tqdm(total=total_rollouts, desc="Total rollouts consumed for config optimization")
 
         for round in range(num_rounds):
-            print("=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
-            print("Total versions: ", len(self.versions))
+            print("\n\n" + "=" * 30 + f" Round {round + 1}/{num_rounds} begins" + "=" * 30)
+            print("Total versions accepted: ", len(self.versions))
             print("Rebase to version: ", self.current_version)
-            print("Score (current base): ", self.versions[self.current_version]["average_score"])
-            print("Visits (current base): ", self.versions[self.current_version]["visits"])
-            print("Visits (total): ", self.total_visits)
+            print(
+                "Score for the current base version: %s based on %s rollouts"
+                % (
+                    self.versions[self.current_version]["average_score"],
+                    self.versions[self.current_version]["visits"] * group_size,
+                )
+            )
             print("\n\n")
 
             new_version = False
             for _ in range(iterate_steps):
                 changes_accepted = await self._iterate(
-                    batch_size=batch_size, verbose=verbose, sampler=sampler, group_id=group_id, pbar=pbar
+                    batch_size=group_size, verbose=verbose, sampler=sampler, group_id=group_id, pbar=pbar
                 )
                 if changes_accepted:
                     new_version = True
@@ -474,7 +478,7 @@ class Maestro:
             for _ in range(select_steps):
                 await self._select(explore=True)
 
-                setups = sampler.sample(batch_size)
+                setups = sampler.sample(group_size)
                 awaitables = []
                 criticos = []
                 for setup in setups:
@@ -518,17 +522,21 @@ class Maestro:
             # Switch to the current version with highest score
             await self._select(explore=False)
 
-            print("=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
-            print("Total versions: ", len(self.versions))
-            print("Best version: ", self.current_version)
-            print("Score (best version): ", self.versions[self.current_version]["average_score"])
-            print("Visits (best version): ", self.versions[self.current_version]["visits"])
-            print("Visits (total): ", self.total_visits)
+            print("\n\n" + "=" * 30 + f" Round {round + 1}/{num_rounds} finishes" + "=" * 30)
+            print("Total versions accepted: ", len(self.versions))
+            print("Best version index: ", self.current_version)
+            print(
+                "Score for the best version: %s based on %s rollouts"
+                % (
+                    self.versions[self.current_version]["average_score"],
+                    self.versions[self.current_version]["visits"] * group_size,
+                )
+            )
 
             print(
-                "all versions: ",
+                "All versions: ",
                 {
-                    i: {"score": self.versions[i]["average_score"], "visits": self.versions[i]["visits"]}
+                    i: {"score": self.versions[i]["average_score"], "rollouts evaluated": self.versions[i]["visits"] * group_size}
                     for i in range(len(self.versions))
                 },
             )
@@ -599,7 +607,7 @@ class Maestro:
 
         print("optimize_structure settings:")
         print("  total_rollouts: ", total_rollouts)
-        print("-" * 60 + "\n\n")
+        print("=" * 80 + "\n\n")
 
         if code_paths is not None:
             code = extract_code(code_paths=code_paths)
@@ -610,9 +618,10 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
-        group_id = uuid4().hex
+        group_id = "Maestro-Struct-" + uuid4().hex
 
-        print("Running the agent to collect traces...")
+        print("=" * 80)
+        print("Running the agent to collect traces...\n\n")
 
         setups = sampler.sample(total_rollouts)
         awaitables = []
@@ -625,7 +634,8 @@ class Maestro:
 
         test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
 
-        print("Optimizing structure...")
+        print("=" * 80)
+        print("Optimizing structure...\n\n")
         suggestion = await self._client.optimize_structure(
             {
                 "agent_name": get_full_func_name(self.agent_fn),
