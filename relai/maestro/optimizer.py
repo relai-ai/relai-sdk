@@ -420,9 +420,10 @@ class Maestro:
         print("  explore_radius: ", explore_radius)
         print("  explore_factor: ", explore_factor)
         print("-" * 60)
-        print("  iterate_steps: ", iterate_steps)
-        print("  select_steps: ", select_steps)
         print("  num_rounds: ", num_rounds)
+        print("  steps per round for config discovery: ", iterate_steps)
+        print("  steps per round for config evaluation: ", select_steps)
+        
         print("=" * 80 + "\n\n")
 
         if num_rounds == 0:

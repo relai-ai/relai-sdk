@@ -1,5 +1,6 @@
 # ------------------------------------------------------------
 # Prereqs:
+#   export RELAI_API_KEY="relai-..."        # your RELAI API key
 #   export GEMINI_API_KEY="AI..."          # if your agent/tool uses Gemini
 #   pip install relai                  # relai
 #

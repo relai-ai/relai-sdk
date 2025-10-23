@@ -1,5 +1,6 @@
 # ------------------------------------------------------------
 # Prereqs:
+#   export RELAI_API_KEY="relai-..."        # your RELAI API key
 #   export OPENAI_API_KEY="sk-..."          # if your agent/tool uses OpenAI
 #   pip install relai                   # relai
 #   pip install openinference-instrumentation-openai-agents  # optional tracing
