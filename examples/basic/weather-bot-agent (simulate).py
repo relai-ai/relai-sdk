@@ -1,6 +1,7 @@
 # ------------------------------------------------------------
 # Prereqs:
 #   export RELAI_API_KEY="relai-..."        # your RELAI API key
+#   export OPENAI_API_KEY="sk-..."          # your OpenAI API key (for Persona)
 #   export GEMINI_API_KEY="AI..."          # if your agent/tool uses Gemini
 #   pip install relai                  # relai
 #

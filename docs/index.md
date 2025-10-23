@@ -20,6 +20,7 @@ Get up and running with RELAI in minutes:
 - [Getting Started](#getting-started) - Installation, setup and code walkthrough
 - [Tutorials](tutorials/index.md) - Tutorials that show how to achieve a specific task or using a particular feature
 - [Examples](https://github.com/relai-ai/relai-sdk/blob/main/examples) - Self-contained examples illustrating using the SDK in various common scenarios
+- [Notebooks](https://github.com/relai-ai/relai-sdk/blob/main/notebooks) - Jupyter notebooks illustrating using the SDK in various common scenarios
 - [API Reference](api/index.md) - Detailed reference to the SDK API
 
 # Getting Started
