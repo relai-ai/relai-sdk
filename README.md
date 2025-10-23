@@ -171,17 +171,17 @@ if __name__ == "__main__":
 ## Simulation
 Create controlled environments where agents interact and generate traces. Compose LLM personas, mock MCP tools/servers, and synthetic data; optionally condition on real events to align simulation ⇄ production.
 
-➡️ Learn more: [Simulator](https://docs.relai.ai/simulator.html)
+➡️ Learn more: [Simulator](https://docs.relai.ai/api/simulator.html)
 
 ## Evaluation (Critico)
 Use code-based or LLM-based evaluators—or RELAI platform evaluators—and convert human reviews into benchmarks you can re-run in Simuation/CI pipeline.
 
-➡️ Learn more: [Evaluator](https://docs.relai.ai/evaluator.html)
+➡️ Learn more: [Evaluator](https://docs.relai.ai/api/evaluator.html)
 
 ## Optimization (Maestro)
 Maestro is a holistic agent optimizer. It consumes evaluator/user feedback to improve prompts, configs, and even graph structure when prompt tuning isn’t enough. It can also select the best model, best tool, and best graph based on observed performance.
 
-➡️ Learn more: [Maestro](https://docs.relai.ai/maestro.html)
+➡️ Learn more: [Maestro](https://docs.relai.ai/api/maestro.html)
 
 ## Links
 
