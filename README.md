@@ -187,6 +187,7 @@ Maestro is a holistic agent optimizer. It consumes evaluator/user feedback to im
 
 - 📘 **Documentation:** [docs.relai.ai](http://docs.relai.ai)
 - 🧪 **Examples:** [relai-sdk/examples](examples)
+- 📓 **Notebooks:** [relai-sdk/notebooks](notebooks)
 - 📖 **Tutorials:** [docs.relai.ai/tutorials/index.html](https://docs.relai.ai/tutorials/index.html)
 - 🌐 **Website:** [relai.ai](https://relai.ai)
 - 📰 **Maestro Technical Report:** [ArXiV](https://arxiv.org/abs/2509.04642)
