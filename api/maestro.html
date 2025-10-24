@@ -966,7 +966,7 @@ Defaults to 1.</p>
 
 
 <h2 id="relai.maestro.Maestro.optimize_config" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">optimize_config</span><span class="p">(</span><span class="n">total_rollouts</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">explore_radius</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">explore_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">optimize_config</span><span class="p">(</span><span class="n">total_rollouts</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">explore_radius</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">explore_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-async"><code>async</code></small>
@@ -1016,11 +1016,11 @@ Defaults to 1.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Base batch size to use for individual optimization steps. Defaults to 4.</p>
+                <p>Base batch size to use for individual optimization steps. Defaults to 8.</p>
               </div>
             </td>
             <td>
-                  <code>4</code>
+                  <code>8</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1070,11 +1070,11 @@ Defaults to 0.5.</p>
             <td>
               <div class="doc-md-description">
                 <p>If True, related information will be printed during the optimization step.
-Defaults to False.</p>
+Defaults to True.</p>
               </div>
             </td>
             <td>
-                  <code>False</code>
+                  <code>True</code>
             </td>
           </tr>
       </tbody>
@@ -1112,7 +1112,7 @@ Defaults to False.</p>
 
 
 <h2 id="relai.maestro.Maestro.optimize_structure" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">optimize_structure</span><span class="p">(</span><span class="n">total_rollouts</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">code_paths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">optimize_structure</span><span class="p">(</span><span class="n">total_rollouts</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">code_paths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-async"><code>async</code></small>
@@ -1199,11 +1199,11 @@ the implementation of the agent.</p>
             <td>
               <div class="doc-md-description">
                 <p>If True, additional information will be printed during the optimization.
-Defaults to False.</p>
+Defaults to True.</p>
               </div>
             </td>
             <td>
-                  <code>False</code>
+                  <code>True</code>
             </td>
           </tr>
       </tbody>
