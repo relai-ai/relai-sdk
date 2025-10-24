@@ -34,6 +34,10 @@ export RELAI_API_KEY="<RELAI_API_KEY>"
 ```
 
 ### Example: A simple Stock Assistant Agent (Simulate → Evaluate → Optimize) 
+
+Notebook version of the example below: [stock-assistant (simulate->evaluate->optimize).ipynb](/notebooks/basic/stock-assistant%20(simulate-%3Eevaluate-%3Eoptimize).ipynb)
+
+
 Prerequisites: Needs an OpenAI API key and `openai-agents` installed to run the base agent.
 To use Maestro graph optimizer, save the following in a file called `stock-assistant.py` (or change the `code_paths` argument to `maestro.optimize_structure`).
 ```python
