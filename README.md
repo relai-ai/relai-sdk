@@ -19,6 +19,8 @@
 - **Agent Evaluation** — Mix code-based and LLM-based custom evaluators or use RELAI platform evaluators. Turn human reviews into benchmarks you can re-run.
 - **Agent Optimization (Maestro)** — Holistic optimizer that uses evaluator signals & feedback to improve **prompts/configs** and suggest **graph-level** changes. Maestro selects best model/tool/graph based on observed performance.
 
+**Works with**: **OpenAI Agents SDK**, **LangGraph**, and other agent frameworks.
+
 ## Quickstart
 
 Create a free account and get a RELAI API key: [platform.relai.ai/settings/access/api-keys](https://platform.relai.ai/settings/access/api-keys)
