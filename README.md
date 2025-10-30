@@ -12,7 +12,7 @@
 </p>
 
 
-**RELAI** is an SDK for building **reliable AI agents**. It streamlines the hardest parts of agent development—**simulation**, **evaluation**, and **optimization**—so you can iterate quickly with confidence.
+**RELAI** is a platform for building **reliable AI agents**. It streamlines the hardest parts of agent development—**simulation**, **evaluation**, and **optimization**—so you can iterate quickly with confidence.
 
 **What you get**
 - **Agent Simulation** — Create full/partial environments, define LLM personas, mock MCP servers & tools, and generate synthetic data. Optionally condition simulation on real samples to better match production.

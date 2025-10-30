@@ -218,6 +218,8 @@ class SyncSimulator(BaseSimulator):
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
                 agent_outputs = self.agent_fn(tape)
+                if not isinstance(agent_outputs, dict):
+                    raise TypeError("agent_fn must return an instance of AgentOutputs")
                 agent_log = AgentLog(simulation_tape=tape, agent_outputs=agent_outputs)
                 if self.log_runs and self.client is not None:
                     trace_id = self.client.upload_trace(data=get_current_logger().to_openinference())
