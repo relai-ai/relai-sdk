@@ -9,8 +9,8 @@ from relai import AsyncRELAI, RELAIError
 async def test_relai_client_initialization_arg_api_key(set_env_vars):
     # Test with API key provided as an argument
     async with AsyncRELAI(api_key="arg_api_key") as client:
-        assert client._api_key == "arg_api_key"
-        assert client._api_url == "https://test-api.relai.ai"
+        assert client.api_key == "arg_api_key"
+        assert client.api_url == "https://test-api.relai.ai"
 
 
 @pytest.mark.unit
@@ -18,8 +18,8 @@ async def test_relai_client_initialization_arg_api_key(set_env_vars):
 async def test_relai_client_initialization_env_api_key(set_env_vars):
     # Test with API key provided through environment variable
     async with AsyncRELAI() as client:
-        assert client._api_key == "relai-org-test-key"
-        assert client._api_url == "https://test-api.relai.ai"
+        assert client.api_key == "relai-org-test-key"
+        assert client.api_url == "https://test-api.relai.ai"
 
 
 @pytest.mark.unit
