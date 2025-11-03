@@ -134,7 +134,8 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
+            + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -423,7 +424,7 @@ class Maestro:
         print("  num_rounds: ", num_rounds)
         print("  steps per round for config discovery: ", iterate_steps)
         print("  steps per round for config evaluation: ", select_steps)
-        
+
         print("=" * 80 + "\n\n")
 
         if num_rounds == 0:
@@ -537,7 +538,10 @@ class Maestro:
             print(
                 "All versions: ",
                 {
-                    i: {"score": self.versions[i]["average_score"], "rollouts evaluated": self.versions[i]["visits"] * group_size}
+                    i: {
+                        "score": self.versions[i]["average_score"],
+                        "rollouts evaluated": self.versions[i]["visits"] * group_size,
+                    }
                     for i in range(len(self.versions))
                 },
             )

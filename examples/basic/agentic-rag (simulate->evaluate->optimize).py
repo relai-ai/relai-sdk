@@ -139,7 +139,9 @@ async def main() -> None:
     env_generator = random_env_generator(
         config_set={
             "__main__.get_user_query": [Persona(user_persona="A polite and curious user.")],
-            "__main__.retriever": [MockTool(model=MODEL)],
+            "__main__.retriever": [
+                MockTool(model=MODEL, context="The length of the list returned should be at most 3.")
+            ],
         }
     )
 
@@ -177,7 +179,9 @@ async def main() -> None:
         # 5.4.2 — Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
             total_rollouts=5,  # Total number of rollouts to use for optimization.
-            code_paths=["agentic-rag (simulate->evaluate->optimize).py"],  # A list of paths corresponding to code implementations of the agent.
+            code_paths=[
+                "agentic-rag (simulate->evaluate->optimize).py"
+            ],  # A list of paths corresponding to code implementations of the agent.
             verbose=True,  # If True, additional information will be printed during the optimization step.
         )
 
