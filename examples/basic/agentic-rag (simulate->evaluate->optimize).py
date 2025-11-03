@@ -139,7 +139,9 @@ async def main() -> None:
     env_generator = random_env_generator(
         config_set={
             "__main__.get_user_query": [Persona(user_persona="A polite and curious user.")],
-            "__main__.retriever": [MockTool(model=MODEL, context="The length of the list returned should be at most 3.")],
+            "__main__.retriever": [
+                MockTool(model=MODEL, context="The length of the list returned should be at most 3.")
+            ],
         }
     )
 

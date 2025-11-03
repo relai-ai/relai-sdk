@@ -78,7 +78,7 @@ class MockTool(BaseMocker):
             )
         output = result.final_output
         return output
-    
+
     def serialize(self) -> dict[str, str]:
         return {
             "model": self.model or "None",
