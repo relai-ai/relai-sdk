@@ -24,7 +24,10 @@ class BaseRELAI(ABC):
     def headers(self) -> dict[str, str]:
         if self.api_key is None:
             raise RELAIError(
-                "API key must be provided either as an argument or through the `RELAI_API_KEY` environment variable."
+                (
+                    """API key must be provided either as an argument or through the `RELAI_API_KEY` environment """
+                    """variable. An API key is required for all interactions with the RELAI Platform."""
+                )
             )
         return {
             "Content-Type": "application/json",
