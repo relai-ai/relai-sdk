@@ -3001,7 +3001,7 @@ wheels = [
 
 [[package]]
 name = "relai"
-version = "0.3.4"
+version = "0.3.8"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp", extra = ["speedups"] },

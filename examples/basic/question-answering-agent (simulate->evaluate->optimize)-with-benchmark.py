@@ -78,7 +78,7 @@ async def agent_fn(tape: SimulationTape) -> AgentOutputs:
     question = tape.agent_inputs[
         "Question"
     ]  # read the question from the tape, which originates from the benchmark samples
-    
+
     # It is good practice to catch exceptions in agent function
     # especially if the agent might raise errors with different configs
     try:
@@ -109,6 +109,7 @@ class GoldAnswerEvaluator(Evaluator):
             feedback = f"The agent's answer does NOT contain the gold answer: {gold_answer}."
         return EvaluatorLog(evaluator_id=self.uid, name=self.name, outputs={"score": score, "feedback": feedback})
 
+
 # (You can add built-in RELAI platform evaluators here as well.)
 
 
@@ -122,10 +123,10 @@ async def main() -> None:
     async with AsyncRELAI() as client:
         # 5.2 — SIMULATE
         simulator = AsyncSimulator(
-            agent_fn=agent_fn, 
-            client=client, 
-            benchmark=benchmark, # IMPORTANT: use the csv benchmark for simulation
-            log_runs=True
+            agent_fn=agent_fn,
+            client=client,
+            benchmark=benchmark,  # IMPORTANT: use the csv benchmark for simulation
+            log_runs=True,
         )
         agent_logs = await simulator.run(num_runs=1)
         print(agent_logs)
@@ -139,7 +140,9 @@ async def main() -> None:
         await critico.report(critico_logs)
 
         # 5.4 — OPTIMIZE with Maestro
-        maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Question Answering Agent Example")
+        maestro = Maestro(
+            client=client, agent_fn=agent_fn, log_to_platform=True, name="Question Answering Agent Example"
+        )
         maestro.add_setup(simulator=simulator, critico=critico)
         # one can use multiple simulator+critico setups with different weights by calling `add_setup` multiple times
         # maestro.add_setup(simulator=simulator, critico=critico, weight = 1)
@@ -159,7 +162,9 @@ async def main() -> None:
         # 5.4.2 — Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["question-answering-agent (simulate->evaluate->optimize)-with-benchmark.py"],  # A list of paths corresponding to code implementations of the agent.
+            code_paths=[
+                "question-answering-agent (simulate->evaluate->optimize)-with-benchmark.py"
+            ],  # A list of paths corresponding to code implementations of the agent.
             verbose=True,  # If True, additional information will be printed during the optimization step.
         )
 
