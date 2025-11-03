@@ -214,7 +214,9 @@ async def main():
         # Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["chat-agent (advanced evaluation).py"],  # A list of paths corresponding to code implementations of the agent.
+            code_paths=[
+                "chat-agent (advanced evaluation).py"
+            ],  # A list of paths corresponding to code implementations of the agent.
             verbose=True,  # If True, additional information will be printed during the optimization step.
         )
 

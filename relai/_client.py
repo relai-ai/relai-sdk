@@ -15,17 +15,24 @@ class BaseRELAI(ABC):
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         if api_key is None:
             api_key = os.getenv("RELAI_API_KEY")
-        if api_key is None:
-            raise RELAIError(
-                "API key must be provided either as an argument or through the `RELAI_API_KEY` environment variable."
-            )
-        self._api_key = api_key
+        self.api_key = api_key
         if api_url is None:
             api_url = os.getenv("RELAI_API_URL", "https://api.relai.ai")
-        self._api_url = api_url
-        self._headers = {
+        self.api_url = api_url
+
+    @property
+    def headers(self) -> dict[str, str]:
+        if self.api_key is None:
+            raise RELAIError(
+                (
+                    """API key must be provided either as an argument or through the `RELAI_API_KEY` environment """
+                    """variable. An API key is required for all interactions with the RELAI Platform."""
+                )
+            )
+        return {
             "Content-Type": "application/json",
-            "Authorization": f"Token {self._api_key}",
+            "Authorization": f"Token {self.api_key}",
+            "Accept-Encoding": "gzip, deflate",
         }
 
 
@@ -46,11 +53,7 @@ class RELAI(BaseRELAI):
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         super().__init__(api_key=api_key, api_url=api_url)
-        self._headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Token {self._api_key}",
-        }
-        self._client = httpx.Client(base_url=self._api_url, headers=self._headers)
+        self._client = httpx.Client(base_url=self.api_url, headers=self.headers)
 
     def close(self):
         self._client.close()
@@ -416,12 +419,7 @@ class AsyncRELAI(BaseRELAI):
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         super().__init__(api_key=api_key, api_url=api_url)
-        self._headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Token {self._api_key}",
-            "Accept-Encoding": "gzip, deflate",
-        }
-        self._client = aiohttp.ClientSession(base_url=self._api_url, headers=self._headers)
+        self._client = aiohttp.ClientSession(base_url=self.api_url, headers=self.headers)
 
     async def close(self):
         await self._client.close()

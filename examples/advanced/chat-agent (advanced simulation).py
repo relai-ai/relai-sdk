@@ -7,7 +7,7 @@
 #   pip install langchain-openai            # langchain-openai
 #
 # Here we demonstrate with a simple chat agent:
-# How to use simulation tape to record arbitrary additional information during simulation 
+# How to use simulation tape to record arbitrary additional information during simulation
 # for evaluating/optimizing latency, intermediate steps, etc.).
 
 import asyncio
@@ -208,7 +208,9 @@ async def main():
         # Optimize agent structure (changes that cannot be achieved by setting parameters alone)
         await maestro.optimize_structure(
             total_rollouts=10,  # Total number of rollouts to use for optimization.
-            code_paths=["chat-agent (advanced simulation).py"],  # A list of paths corresponding to code implementations of the agent.
+            code_paths=[
+                "chat-agent (advanced simulation).py"
+            ],  # A list of paths corresponding to code implementations of the agent.
             verbose=True,  # If True, additional information will be printed during the optimization step.
         )
 
