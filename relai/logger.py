@@ -105,8 +105,12 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
                     {
                         "type": "model_calling",
                         "model_name": attributes["llm.model_name"],
-                        "model_input": unflatten_attributes(attributes, "llm.input_messages"),
-                        "model_output": unflatten_attributes(attributes, "llm.output_messages"),
+                        "model_input": attributes.get(
+                            "input.value", unflatten_attributes(attributes, "llm.input_messages")
+                        ),
+                        "model_output": attributes.get(
+                            "output.value", unflatten_attributes(attributes, "llm.output_messages")
+                        ),
                         "note": attributes.get("relai.note"),
                     }
                 )
@@ -115,8 +119,12 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
                     {
                         "type": "router",
                         "router_name": attributes["llm.model_name"],
-                        "router_input": unflatten_attributes(attributes, "llm.input_messages"),
-                        "router_output": unflatten_attributes(attributes, "llm.output_messages"),
+                        "router_input": attributes.get(
+                            "input.value", unflatten_attributes(attributes, "llm.input_messages")
+                        ),
+                        "router_output": attributes.get(
+                            "output.value", unflatten_attributes(attributes, "llm.output_messages")
+                        ),
                         "note": attributes.get("relai.note"),
                     }
                 )
@@ -206,14 +214,14 @@ class Logger:
                         SpanAttributes.LLM_INPUT_MESSAGES + "." + attribute, value
                     )  # List of messages sent to the LLM in a chat API request, [{"message.role": "user", "message.content": "hello"}]
             else:
-                span.set_attribute(SpanAttributes.LLM_INPUT_MESSAGES, input)
+                span.set_attribute(SpanAttributes.LLM_INPUT_MESSAGES + ".input", input)
             if isinstance(output, Mapping):
                 for attribute, value in flatten(output):
                     span.set_attribute(
                         SpanAttributes.LLM_OUTPUT_MESSAGES + "." + attribute, value
                     )  # Messages received from a chat API, [{"message.role": "user", "message.content": "hello"}]
             else:
-                span.set_attribute(SpanAttributes.LLM_OUTPUT_MESSAGES, output)
+                span.set_attribute(SpanAttributes.LLM_OUTPUT_MESSAGES + ".output", output)
             span.set_attribute(SpanAttributes.LLM_MODEL_NAME, name)  # The name of the language model being utilized
             if note is not None:
                 span.set_attribute("relai.note", note)  # The note provided by user
