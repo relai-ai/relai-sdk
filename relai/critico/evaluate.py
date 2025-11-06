@@ -7,6 +7,7 @@ from itertools import chain
 from typing import Any, Callable, ClassVar, Literal, Optional
 
 from agents import Agent, Runner
+from agents.extensions.models.litellm_model import LitellmModel
 from pydantic import BaseModel, create_model
 
 from relai import AsyncRELAI
@@ -405,7 +406,9 @@ class RELAIStyleEvaluator(RELAIEvaluator):
             format_rubrics={"Any format": 1.0},  # TODO: pass empty dict when backend is patched
         )
 
-    async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def compute_evaluator_result(
+        self, agent_log: AgentLog
+    ) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
         """
         Compute the evaluation result based on the agent log using the RELAI evaluator.
 
@@ -482,7 +485,9 @@ class RELAIFormatEvaluator(RELAIEvaluator):
             style_rubrics={"Any style": 1.0},  # TODO: pass empty dict when backend is patched
         )
 
-    async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def compute_evaluator_result(
+        self, agent_log: AgentLog
+    ) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
         """
         Compute the evaluation result based on the agent log using the RELAI evaluator.
 
@@ -696,12 +701,17 @@ class RELAICustomEvaluator(Evaluator):
         self,
         evaluator_id: str,
         model_name: str = "gpt-5-mini",
+        model: LitellmModel | None = None,
         transform: Optional[Callable] = None,
     ):
         """
         Args:
             evaluator_id (str): The unique identifier of the custom evaluator defined on the RELAI platform.
             model_name (str, optional): The name of the model to use for the evaluator. Defaults to "gpt-5-mini".
+            model (LitellmModel | None, optional): An optional LitellmModel
+                (from agents.extensions.models.litellm_model import LitellmModel) instance to use for the evaluator.
+                If provided, it overrides the `model_name`. For a full list of models supported in LiteLLM,
+                see https://docs.litellm.ai/docs/providers. Defaults to None.
             transform (Callable): An optional callable to transform (pre-process) the `agent_outputs` of the agent
                 response for the evaluator. Defaults to None.
         """
@@ -714,7 +724,7 @@ class RELAICustomEvaluator(Evaluator):
         self.evaluator_id = evaluator_id
         self._agent = Agent(
             name=self.name,
-            model=model_name,
+            model=model_name if model is None else model,
             instructions=self.prompt_template.format(instructions=evaluator_prompt, output_fields=output_fields),
             output_type=RELAICustomEvaluator.create_output_model(output_fields),
         )
