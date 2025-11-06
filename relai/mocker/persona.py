@@ -5,6 +5,7 @@ from typing import Any, ClassVar, cast, overload
 from uuid import uuid4
 
 from agents import Agent, Runner, SQLiteSession, Tool, function_tool
+from agents.extensions.models.litellm_model import LitellmModel
 
 from .._client import get_default_client
 from ..utils import log_persona, no_trace
@@ -39,7 +40,7 @@ class Persona(BaseMocker):
         intent: str | None = None,
         starting_message: str | None = None,
         tools: list[Callable[..., Any]] | None = None,
-        model: str | None = "gpt-5-mini",
+        model: str | LitellmModel = "gpt-5-mini",
     ):
         """
         Initializes the Persona with a description, intent, optional starting message, tools, and model.
@@ -49,7 +50,10 @@ class Persona(BaseMocker):
             intent (str | None): The intent or goal of the persona during interactions.
             starting_message (str | None): An optional initial message that the persona will use to start interactions.
             tools (Optional[list[Tool]]): A list of tools that the persona can use.
-            model (str | None): The AI model to use for simulating the persona's behavior.
+            model (str | LitellmModel): The AI model to use for simulating the persona's behavior.
+                This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
+                (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
+                models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
         """
         super().__init__()
         self.name = f"persona-{uuid4().hex}"
@@ -101,7 +105,13 @@ class Persona(BaseMocker):
                 )
             output = result.final_output
 
-        log_persona(f"RELAI Persona ({self.name})", self.model, agent_input, output, note=f"Persona id: {self.name}")
+        log_persona(
+            f"RELAI Persona ({self.name})",
+            self.model if isinstance(self.model, str) else self.model.model,
+            agent_input,
+            output,
+            note=f"Persona id: {self.name}",
+        )
         return output
 
     async def _arun(self, *args, **kwargs):
@@ -125,7 +135,13 @@ class Persona(BaseMocker):
                 )
             output = result.final_output
 
-        log_persona(f"RELAI Persona ({self.name})", self.model, agent_input, output, note=f"Persona id: {self.name}")
+        log_persona(
+            f"RELAI Persona ({self.name})",
+            self.model if isinstance(self.model, str) else self.model.model,
+            agent_input,
+            output,
+            note=f"Persona id: {self.name}",
+        )
         return output
 
     def serialize(self) -> dict[str, str]:
@@ -163,9 +179,7 @@ class PersonaSet(Sequence[Persona]):
 
     def personas(self) -> list[Persona]:
         if self._personas is None:
-            self._personas = [
-                Persona(user_persona=persona, **self._persona_kwargs) for persona in self.user_personas()
-            ]
+            self._personas = [Persona(user_persona=persona, **self._persona_kwargs) for persona in self.user_personas()]
         return self._personas
 
     @overload
