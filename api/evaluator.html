@@ -2330,7 +2330,7 @@ response for the evaluator. Defaults to None.</p>
 
 
 <h1 id="relai.critico.evaluate.RELAICustomEvaluator" class="doc doc-heading">
-              <code class="highlight language-python"><span class="n">relai</span><span class="o">.</span><span class="n">critico</span><span class="o">.</span><span class="n">evaluate</span><span class="o">.</span><span class="n">RELAICustomEvaluator</span><span class="p">(</span><span class="n">evaluator_id</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;gpt-5-mini&#39;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">relai</span><span class="o">.</span><span class="n">critico</span><span class="o">.</span><span class="n">evaluate</span><span class="o">.</span><span class="n">RELAICustomEvaluator</span><span class="p">(</span><span class="n">evaluator_id</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;gpt-5-mini&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#relai.critico.evaluate.RELAICustomEvaluator" class="headerlink" title="Permanent link">&para;</a></h1>
 
@@ -2389,6 +2389,25 @@ defined on the RELAI platform.</p>
             </td>
             <td>
                   <code>&#39;gpt-5-mini&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model</code>
+            </td>
+            <td>
+                  <code><span title="agents.extensions.models.litellm_model.LitellmModel">LitellmModel</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional LitellmModel
+(from agents.extensions.models.litellm_model import LitellmModel) instance to use for the evaluator.
+If provided, it overrides the <code>model_name</code>. For a full list of models supported in LiteLLM,
+see <a href="https://docs.litellm.ai/docs/providers">https://docs.litellm.ai/docs/providers</a>. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">

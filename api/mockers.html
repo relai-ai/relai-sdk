@@ -889,11 +889,14 @@ tools.</p>
                 <code>model</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | None</code>
+                  <code><span title="str">str</span> | <span title="agents.extensions.models.litellm_model.LitellmModel">LitellmModel</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The AI model to use for simulating the persona's behavior.</p>
+                <p>The AI model to use for simulating the persona's behavior.
+This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
+(from agents.extensions.models.litellm_model import LitellmModel). For a full list of
+models supported in LiteLLM, see <a href="https://docs.litellm.ai/docs/providers">https://docs.litellm.ai/docs/providers</a></p>
               </div>
             </td>
             <td>
@@ -937,7 +940,7 @@ tools.</p>
 
 
 <h1 id="relai.mocker.MockTool" class="doc doc-heading">
-              <code class="highlight language-python"><span class="n">relai</span><span class="o">.</span><span class="n">mocker</span><span class="o">.</span><span class="n">MockTool</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;gpt-5-mini&#39;</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">relai</span><span class="o">.</span><span class="n">mocker</span><span class="o">.</span><span class="n">MockTool</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;gpt-5-mini&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#relai.mocker.MockTool" class="headerlink" title="Permanent link">&para;</a></h1>
 
@@ -977,6 +980,22 @@ tools.</p>
             </td>
             <td>
                   <code>&#39;gpt-5-mini&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional context to guide behavior of the mock tool.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
