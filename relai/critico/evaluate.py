@@ -753,17 +753,28 @@ class RELAICustomEvaluator(Evaluator):
         for name, value in chain(agent_log.simulation_tape.data.items(), agent_log.agent_outputs.items()):
             if name in self.required_fields:
                 evaluator_inputs[name] = value
-        result = await Runner.run(
-            self._agent,
-            str(evaluator_inputs),
-        )
-        result = result.final_output
-        return EvaluatorLog(
-            evaluator_id=self.uid,
-            name=self.name,
-            config=self.hyperparameters,
-            outputs={
-                "score": result.score,
-                "feedback": result.feedback,
-            },
-        )
+        try:
+            result = await Runner.run(
+                self._agent,
+                str(evaluator_inputs),
+            )
+            result = result.final_output
+            return EvaluatorLog(
+                evaluator_id=self.uid,
+                name=self.name,
+                config=self.hyperparameters,
+                outputs={
+                    "score": result.score,
+                    "feedback": result.feedback,
+                },
+            )
+        except Exception as e:
+            return EvaluatorLog(
+                evaluator_id=self.uid,
+                name=self.name,
+                config=self.hyperparameters,
+                outputs={
+                    "score": 0.0,
+                    "feedback": f"Evaluator failed with error: {str(e)}. \nNo score or feedback could be generated.",
+                },
+            )

@@ -99,12 +99,12 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
 
     for span in related_spans:
         attributes = cast(dict[str, Any], span.attributes)
-        if attributes["openinference.span.kind"] == "LLM":
+        if attributes.get("openinference.span.kind") == "LLM":
             if attributes.get("relai.kind", "llm") == "llm":
                 maestro_traces.append(
                     {
                         "type": "model_calling",
-                        "model_name": attributes["llm.model_name"],
+                        "model_name": attributes.get("llm.model_name"),
                         "model_input": attributes.get(
                             "input.value", unflatten_attributes(attributes, "llm.input_messages")
                         ),
@@ -118,7 +118,7 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
                 maestro_traces.append(
                     {
                         "type": "router",
-                        "router_name": attributes["llm.model_name"],
+                        "router_name": attributes.get("llm.model_name"),
                         "router_input": attributes.get(
                             "input.value", unflatten_attributes(attributes, "llm.input_messages")
                         ),
@@ -128,15 +128,15 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
                         "note": attributes.get("relai.note"),
                     }
                 )
-        elif attributes["openinference.span.kind"] == "EMBEDDING":
+        elif attributes.get("openinference.span.kind") == "EMBEDDING":
             "TODO: revisit logging options; further testing required"
-        elif attributes["openinference.span.kind"] == "CHAIN":
+        elif attributes.get("openinference.span.kind") == "CHAIN":
             "TODO: revisit logging options; further testing required"
-        elif attributes["openinference.span.kind"] == "RETRIEVER":
+        elif attributes.get("openinference.span.kind") == "RETRIEVER":
             "TODO: revisit logging options; further testing required"
-        elif attributes["openinference.span.kind"] == "RERANKER":
+        elif attributes.get("openinference.span.kind") == "RERANKER":
             "TODO: revisit logging options; further testing required"
-        elif attributes["openinference.span.kind"] == "TOOL":
+        elif attributes.get("openinference.span.kind") == "TOOL":
             "TODO: tool_output is not automatically instrumented"
             maestro_traces.append(
                 {
@@ -147,7 +147,7 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
                     "note": attributes.get("relai.note"),
                 }
             )
-        elif attributes["openinference.span.kind"] == "AGENT":
+        elif attributes.get("openinference.span.kind") == "AGENT":
             "TODO: revisit logging options; further testing required"
 
     return maestro_traces
