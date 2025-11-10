@@ -19,6 +19,7 @@ class BaseRELAI(ABC):
         if api_url is None:
             api_url = os.getenv("RELAI_API_URL", "https://api.relai.ai")
         self.api_url = api_url
+        self._client = None
 
     @property
     def headers(self) -> dict[str, str]:
@@ -34,6 +35,10 @@ class BaseRELAI(ABC):
             "Authorization": f"Token {self.api_key}",
             "Accept-Encoding": "gzip, deflate",
         }
+    
+    @property
+    def client(self) -> Any:
+        raise NotImplementedError("Subclasses must implement the 'client' property.")
 
 
 class RELAI(BaseRELAI):
@@ -53,21 +58,26 @@ class RELAI(BaseRELAI):
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         super().__init__(api_key=api_key, api_url=api_url)
-        self._client = httpx.Client(base_url=self.api_url, headers=self.headers)
+
+    @property
+    def client(self) -> httpx.Client:
+        if self._client is None:
+            self._client = httpx.Client(base_url=self.api_url, headers=self.headers)
+        return self._client
 
     def close(self):
-        self._client.close()
+        self.client.close()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._client.close()
+        self.client.close()
 
     def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Performs an HTTP request and handles common errors."""
         try:
-            response = self._client.request(method, url, **kwargs)
+            response = self.client.request(method, url, **kwargs)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -419,10 +429,15 @@ class AsyncRELAI(BaseRELAI):
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         super().__init__(api_key=api_key, api_url=api_url)
-        self._client = aiohttp.ClientSession(base_url=self.api_url, headers=self.headers)
+
+    @property
+    def client(self) -> aiohttp.ClientSession:
+        if self._client is None:
+            self._client = aiohttp.ClientSession(base_url=self.api_url, headers=self.headers)
+        return self._client
 
     async def close(self):
-        await self._client.close()
+        await self.client.close()
 
     async def __aenter__(self):
         return self
@@ -433,7 +448,7 @@ class AsyncRELAI(BaseRELAI):
     async def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Performs an HTTP request and handles common errors."""
         try:
-            async with self._client.request(method, url, **kwargs) as response:
+            async with self.client.request(method, url, **kwargs) as response:
                 try:
                     response.raise_for_status()
                 except aiohttp.ClientResponseError as e:
