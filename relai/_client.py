@@ -341,6 +341,22 @@ class RELAI(BaseRELAI):
             },
         )
 
+    def upload_critico_report(self, title: str, raw_evaluation_sets: list[dict[str, Any]]) -> None:
+        """
+        Submit a Critico report to the RELAI platform.
+
+        Args:
+            title (str): The title of the Critico report.
+            raw_evaluation_sets (list[dict[str, Any]]): The data of the Critico report.
+        """
+        self._post(
+            "/api/v1/benchmarks/evaluations/submit/",
+            json={
+                "title": title,
+                "raw_evaluation_sets": raw_evaluation_sets,
+            }
+        )
+
     def update_config_opt_visual(self, config_viz: ConfigOptVizSchema, uuid: str | None = None) -> str:
         """
         Updates the configuration optimization visualization data on the RELAI platform.
@@ -709,8 +725,11 @@ class AsyncRELAI(BaseRELAI):
         Submits evaluation data to the RELAI platform.
 
         Args:
-            evaluation_data (dict): The evaluation data to submit.
-
+            trace_id (str): A trace identifier for the corresponding agent simulation run.
+            evaluator_logs (list[dict[str, Any]]): A list of logs from individual evaluators.
+            aggregate_score (float): The aggregate score computed from all the evaluator logs.
+            aggregate_feedback (str): The aggregate feedback compiled from all the evaluator logs.
+            
         Returns:
             Any: The response from the submission.
 
@@ -725,6 +744,22 @@ class AsyncRELAI(BaseRELAI):
                 "aggregate_score": aggregate_score,
                 "aggregate_feedback": aggregate_feedback,
             },
+        )
+    
+    async def upload_critico_report(self, title: str, raw_evaluation_sets: list[dict[str, Any]]) -> None:
+        """
+        Submit a Critico report to the RELAI platform.
+        
+        Args:
+            title (str): The title of the Critico report.
+            raw_evaluation_sets (list[dict[str, Any]]): The data of the Critico report.
+        """
+        await self._post(
+            "/api/v1/benchmarks/evaluations/submit/",
+            json={
+                "title": title,
+                "raw_evaluation_sets": raw_evaluation_sets,
+            }
         )
 
     async def update_config_opt_visual(self, config_viz: ConfigOptVizSchema, uuid: str | None = None) -> str:
