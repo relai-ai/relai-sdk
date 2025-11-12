@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from collections import defaultdict
 from dataclasses import asdict
@@ -198,13 +199,15 @@ class Critico:
             flattened = {}
             for k, v in input.items():
                 if isinstance(v, dict) or isinstance(v, list):
-                    flattened[k] = str(v)
+                    try:
+                        flattened[k] = json.dumps(v, indent=2, ensure_ascii=False)
+                    except Exception:
+                        flattened[k] = str(v)
                 elif hasattr(v, "serialize"):
                     flattened[k] = v.serialize()
                 else:
                     flattened[k] = v
             return flattened
-
 
         raw_evaluation_sets = [
             {
