@@ -35,7 +35,7 @@ class BaseRELAI(ABC):
             "Authorization": f"Token {self.api_key}",
             "Accept-Encoding": "gzip, deflate",
         }
-    
+
     @property
     def client(self) -> Any:
         raise NotImplementedError("Subclasses must implement the 'client' property.")
@@ -354,7 +354,7 @@ class RELAI(BaseRELAI):
             json={
                 "title": title,
                 "raw_evaluation_sets": raw_evaluation_sets,
-            }
+            },
         )
 
     def update_config_opt_visual(self, config_viz: ConfigOptVizSchema, uuid: str | None = None) -> str:
@@ -729,7 +729,7 @@ class AsyncRELAI(BaseRELAI):
             evaluator_logs (list[dict[str, Any]]): A list of logs from individual evaluators.
             aggregate_score (float): The aggregate score computed from all the evaluator logs.
             aggregate_feedback (str): The aggregate feedback compiled from all the evaluator logs.
-            
+
         Returns:
             Any: The response from the submission.
 
@@ -745,11 +745,11 @@ class AsyncRELAI(BaseRELAI):
                 "aggregate_feedback": aggregate_feedback,
             },
         )
-    
+
     async def upload_critico_report(self, title: str, raw_evaluation_sets: list[dict[str, Any]]) -> None:
         """
         Submit a Critico report to the RELAI platform.
-        
+
         Args:
             title (str): The title of the Critico report.
             raw_evaluation_sets (list[dict[str, Any]]): The data of the Critico report.
@@ -759,7 +759,7 @@ class AsyncRELAI(BaseRELAI):
             json={
                 "title": title,
                 "raw_evaluation_sets": raw_evaluation_sets,
-            }
+            },
         )
 
     async def update_config_opt_visual(self, config_viz: ConfigOptVizSchema, uuid: str | None = None) -> str:

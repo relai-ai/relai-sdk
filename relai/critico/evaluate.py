@@ -406,9 +406,7 @@ class RELAIStyleEvaluator(RELAIEvaluator):
             format_rubrics={"Any format": 1.0},  # TODO: pass empty dict when backend is patched
         )
 
-    async def compute_evaluator_result(
-        self, agent_log: AgentLog
-    ) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
         """
         Compute the evaluation result based on the agent log using the RELAI evaluator.
 
@@ -485,9 +483,7 @@ class RELAIFormatEvaluator(RELAIEvaluator):
             style_rubrics={"Any style": 1.0},  # TODO: pass empty dict when backend is patched
         )
 
-    async def compute_evaluator_result(
-        self, agent_log: AgentLog
-    ) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def compute_evaluator_result(self, agent_log: AgentLog) -> EvaluatorLog:  # pyright: ignore[reportIncompatibleMethodOverride]
         """
         Compute the evaluation result based on the agent log using the RELAI evaluator.
 
