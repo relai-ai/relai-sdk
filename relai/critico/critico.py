@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from collections import defaultdict
 from dataclasses import asdict
@@ -13,7 +14,7 @@ from .evaluate import Evaluator
 class Critico:
     """Critico orchestrates evaluation of an AI agent using a configurable set of evaluators."""
 
-    def __init__(self, client: AsyncRELAI):
+    def __init__(self, client: AsyncRELAI) -> None:
         """
         Args:
             client (AsyncRELAI): An instance of the AsyncRELAI client to interact with the RELAI platform.
@@ -26,7 +27,7 @@ class Critico:
         evaluator_group: str,
         evaluator: Evaluator,
         weight: float,
-    ):
+    ) -> None:
         """
         Adjusts the weight of a specific evaluator in a given evaluator group.
 
@@ -172,3 +173,93 @@ class Critico:
                         """Please ensure that logging is enabled in the simulator."""
                     )
                 )
+
+    async def report_aggregate(self, critico_logs: list[CriticoLog], title: str) -> None:
+        """
+        Submits an aggregate Critico report to the RELAI platform.
+
+        Args:
+            critico_logs (list[CriticoLog]): A list of `CriticoLog` objects
+                containing the evaluation results for each `AgentLog`.
+            title (str): The title of the Critico report.
+        """
+        critico_logs_per_benchmark = {}
+        for critico_log in critico_logs:
+            benchmark_id = critico_log.agent_log.simulation_tape.benchmark_id
+            if benchmark_id not in critico_logs_per_benchmark:
+                critico_logs_per_benchmark[benchmark_id] = []
+            critico_logs_per_benchmark[benchmark_id].append(critico_log)
+
+        def flatten(input: dict) -> dict:
+            """
+            Helper function to flatten a dictionary.
+
+            Args:
+                input (dict): The input dictionary to flatten.
+
+            Returns:
+                dict: The flattened dictionary with complex structures serialized as JSON strings.
+            """
+            flattened = {}
+            for k, v in input.items():
+                if isinstance(v, dict) or isinstance(v, list):
+                    try:
+                        flattened[k] = json.dumps(v, indent=2, ensure_ascii=False)
+                    except Exception:
+                        flattened[k] = str(v)
+                elif hasattr(v, "serialize"):
+                    flattened[k] = v.serialize()
+                else:
+                    flattened[k] = v
+            return flattened
+
+        raw_evaluation_sets = [
+            {
+                "evaluation_set_id": benchmark_id,
+                "title": benchmark_id,
+                "aggregate_evaluator_responses": [
+                    {
+                        "agent_response": {
+                            "sample": {
+                                "benchmark_id": critico_log.agent_log.simulation_tape.benchmark_id,
+                                "sample_id": critico_log.agent_log.simulation_tape.sample_id,
+                                "split": critico_log.agent_log.simulation_tape.split,
+                                "agent_inputs": flatten(critico_log.agent_log.simulation_tape.agent_inputs),
+                                "eval_inputs": flatten(critico_log.agent_log.simulation_tape.extras),
+                            },
+                            "agent_outputs": flatten(critico_log.agent_log.agent_outputs),
+                        },
+                        "results": [
+                            {
+                                "evaluator_id": evaluator_log.evaluator_id,
+                                "agent_response": {
+                                    "sample": {
+                                        "benchmark_id": critico_log.agent_log.simulation_tape.benchmark_id,
+                                        "sample_id": critico_log.agent_log.simulation_tape.sample_id,
+                                        "split": critico_log.agent_log.simulation_tape.split,
+                                        "agent_inputs": flatten(critico_log.agent_log.simulation_tape.agent_inputs),
+                                        "eval_inputs": flatten(critico_log.agent_log.simulation_tape.extras),
+                                    },
+                                    "agent_outputs": flatten(critico_log.agent_log.agent_outputs),
+                                },
+                                "score": evaluator_log.outputs["score"],
+                                "feedback": evaluator_log.outputs["feedback"],
+                                "evaluator_name": evaluator_log.name,
+                                "evaluator_configuration": flatten(evaluator_log.config),
+                                "evaluator_outputs": evaluator_log.outputs,
+                            }
+                            for evaluator_log in critico_log.evaluator_logs
+                        ],
+                        "aggregate_score": critico_log.aggregate_score,
+                        "aggregate_feedback": critico_log.aggregate_feedback,
+                    }
+                    for critico_log in logs
+                ],
+            }
+            for benchmark_id, logs in critico_logs_per_benchmark.items()
+        ]
+
+        await self._client.upload_critico_report(
+            title=title,
+            raw_evaluation_sets=raw_evaluation_sets,
+        )

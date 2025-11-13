@@ -179,7 +179,9 @@ class PersonaSet(Sequence[Persona]):
 
     def personas(self) -> list[Persona]:
         if self._personas is None:
-            self._personas = [Persona(user_persona=persona, **self._persona_kwargs) for persona in self.user_personas()]
+            self._personas = [
+                Persona(user_persona=persona, **self._persona_kwargs) for persona in self.user_personas()
+            ]
         return self._personas
 
     @overload

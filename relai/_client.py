@@ -1,7 +1,7 @@
 import asyncio
 import os
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 import aiohttp
@@ -19,6 +19,7 @@ class BaseRELAI(ABC):
         if api_url is None:
             api_url = os.getenv("RELAI_API_URL", "https://api.relai.ai")
         self.api_url = api_url
+        self._client = None
 
     @property
     def headers(self) -> dict[str, str]:
@@ -34,6 +35,11 @@ class BaseRELAI(ABC):
             "Authorization": f"Token {self.api_key}",
             "Accept-Encoding": "gzip, deflate",
         }
+
+    @property
+    @abstractmethod
+    def client(self) -> Any:
+        raise NotImplementedError("Subclasses must implement the 'client' property.")
 
 
 class RELAI(BaseRELAI):
@@ -53,21 +59,26 @@ class RELAI(BaseRELAI):
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         super().__init__(api_key=api_key, api_url=api_url)
-        self._client = httpx.Client(base_url=self.api_url, headers=self.headers)
+
+    @property
+    def client(self) -> httpx.Client:
+        if self._client is None:
+            self._client = httpx.Client(base_url=self.api_url, headers=self.headers)
+        return self._client
 
     def close(self):
-        self._client.close()
+        self.client.close()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._client.close()
+        self.client.close()
 
     def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Performs an HTTP request and handles common errors."""
         try:
-            response = self._client.request(method, url, **kwargs)
+            response = self.client.request(method, url, **kwargs)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -331,6 +342,22 @@ class RELAI(BaseRELAI):
             },
         )
 
+    def upload_critico_report(self, title: str, raw_evaluation_sets: list[dict[str, Any]]) -> None:
+        """
+        Submit a Critico report to the RELAI platform.
+
+        Args:
+            title (str): The title of the Critico report.
+            raw_evaluation_sets (list[dict[str, Any]]): The data of the Critico report.
+        """
+        self._post(
+            "/api/v1/benchmarks/evaluations/submit/",
+            json={
+                "title": title,
+                "raw_evaluation_sets": raw_evaluation_sets,
+            },
+        )
+
     def update_config_opt_visual(self, config_viz: ConfigOptVizSchema, uuid: str | None = None) -> str:
         """
         Updates the configuration optimization visualization data on the RELAI platform.
@@ -419,10 +446,15 @@ class AsyncRELAI(BaseRELAI):
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
         super().__init__(api_key=api_key, api_url=api_url)
-        self._client = aiohttp.ClientSession(base_url=self.api_url, headers=self.headers)
+
+    @property
+    def client(self) -> aiohttp.ClientSession:
+        if self._client is None:
+            self._client = aiohttp.ClientSession(base_url=self.api_url, headers=self.headers)
+        return self._client
 
     async def close(self):
-        await self._client.close()
+        await self.client.close()
 
     async def __aenter__(self):
         return self
@@ -433,7 +465,7 @@ class AsyncRELAI(BaseRELAI):
     async def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Performs an HTTP request and handles common errors."""
         try:
-            async with self._client.request(method, url, **kwargs) as response:
+            async with self.client.request(method, url, **kwargs) as response:
                 try:
                     response.raise_for_status()
                 except aiohttp.ClientResponseError as e:
@@ -694,7 +726,10 @@ class AsyncRELAI(BaseRELAI):
         Submits evaluation data to the RELAI platform.
 
         Args:
-            evaluation_data (dict): The evaluation data to submit.
+            trace_id (str): A trace identifier for the corresponding agent simulation run.
+            evaluator_logs (list[dict[str, Any]]): A list of logs from individual evaluators.
+            aggregate_score (float): The aggregate score computed from all the evaluator logs.
+            aggregate_feedback (str): The aggregate feedback compiled from all the evaluator logs.
 
         Returns:
             Any: The response from the submission.
@@ -709,6 +744,22 @@ class AsyncRELAI(BaseRELAI):
                 "evaluator_logs": evaluator_logs,
                 "aggregate_score": aggregate_score,
                 "aggregate_feedback": aggregate_feedback,
+            },
+        )
+
+    async def upload_critico_report(self, title: str, raw_evaluation_sets: list[dict[str, Any]]) -> None:
+        """
+        Submit a Critico report to the RELAI platform.
+
+        Args:
+            title (str): The title of the Critico report.
+            raw_evaluation_sets (list[dict[str, Any]]): The data of the Critico report.
+        """
+        await self._post(
+            "/api/v1/benchmarks/evaluations/submit/",
+            json={
+                "title": title,
+                "raw_evaluation_sets": raw_evaluation_sets,
             },
         )
 

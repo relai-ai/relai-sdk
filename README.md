@@ -139,8 +139,11 @@ async def main() -> None:
         critico.add_evaluators({format_evaluator: 1.0})
         critico_logs = await critico.evaluate(agent_logs)
 
-        # Publish evaluation report to the RELAI platform
+        # Submit evaluation results to the RELAI platform (https://platform.relai.ai/results/runs)
         await critico.report(critico_logs)
+
+        # Submit an aggregate report to RELAI platform (https://platform.relai.ai/results/critico)
+        await critico.report_aggregate(critico_logs, title="Stock assistant evaluation")
 
         maestro = Maestro(client=client, agent_fn=agent_fn, log_to_platform=True, name="Stock assistant")
         maestro.add_setup(simulator=simulator, critico=critico)
