@@ -95,7 +95,7 @@ def convert_traces(spans: tuple[ReadableSpan, ...], filter_tag: str) -> list[dic
 
     maestro_traces = []
 
-    related_spans = [span for span in spans if filter_tag in span.attributes["tag.tags"]]  # type: ignore
+    related_spans = [span for span in spans if filter_tag in span.attributes.get("tag.tags", [])]  # type: ignore
 
     for span in related_spans:
         attributes = cast(dict[str, Any], span.attributes)
@@ -438,7 +438,7 @@ class Logger:
             "spans": [
                 span.to_json()
                 for span in spans
-                if f"relai.logger.{self._logger_id}" in span.attributes["tag.tags"]  # type: ignore
+                if f"relai.logger.{self._logger_id}" in span.attributes.get("tag.tags", [])  # type: ignore
             ]
         }
 
