@@ -14,7 +14,7 @@ from .evaluate import Evaluator
 class Critico:
     """Critico orchestrates evaluation of an AI agent using a configurable set of evaluators."""
 
-    def __init__(self, client: AsyncRELAI):
+    def __init__(self, client: AsyncRELAI) -> None:
         """
         Args:
             client (AsyncRELAI): An instance of the AsyncRELAI client to interact with the RELAI platform.
@@ -27,7 +27,7 @@ class Critico:
         evaluator_group: str,
         evaluator: Evaluator,
         weight: float,
-    ):
+    ) -> None:
         """
         Adjusts the weight of a specific evaluator in a given evaluator group.
 
@@ -190,11 +190,15 @@ class Critico:
                 critico_logs_per_benchmark[benchmark_id] = []
             critico_logs_per_benchmark[benchmark_id].append(critico_log)
 
-        def flatten(input: dict):
+        def flatten(input: dict) -> dict:
             """
             Helper function to flatten a dictionary.
+
             Args:
                 input (dict): The input dictionary to flatten.
+
+            Returns:
+                dict: The flattened dictionary with complex structures serialized as JSON strings.
             """
             flattened = {}
             for k, v in input.items():
