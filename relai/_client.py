@@ -1,7 +1,7 @@
 import asyncio
 import os
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 import aiohttp
@@ -37,6 +37,7 @@ class BaseRELAI(ABC):
         }
 
     @property
+    @abstractmethod
     def client(self) -> Any:
         raise NotImplementedError("Subclasses must implement the 'client' property.")
 
