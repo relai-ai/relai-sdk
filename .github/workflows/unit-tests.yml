@@ -28,7 +28,9 @@ jobs:
         run: uv sync --group dev
 
       - name: Run Ruff Check
-        run: uv run ruff check
+        run: |
+          uv run ruff format --check
+          uv run ruff check
 
       - name: Run unit tests
         run: uv run pytest -m unit
