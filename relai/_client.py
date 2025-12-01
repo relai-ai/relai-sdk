@@ -67,7 +67,9 @@ class RELAI(BaseRELAI):
         return self._client
 
     def close(self):
-        self.client.close()
+        if self._client is not None:
+            self._client.close()
+            self._client = None
 
     def __enter__(self):
         return self
@@ -454,7 +456,9 @@ class AsyncRELAI(BaseRELAI):
         return self._client
 
     async def close(self):
-        await self.client.close()
+        if self._client is not None:
+            await self._client.close()
+            self._client = None
 
     async def __aenter__(self):
         return self
