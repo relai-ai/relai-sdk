@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from relai import AsyncRELAI, RELAIError
+from relai import AsyncRELAI
 
 
 @pytest.mark.unit
@@ -25,10 +25,9 @@ async def test_relai_client_initialization_env_api_key(set_env_vars):
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_relai_client_initialization_no_api_key():
-    # Test without API key (should raise an error)
-    with pytest.raises(RELAIError):
-        async with AsyncRELAI():
-            pass
+    # Test without API key (should not raise an error as client is not making any requests)
+    async with AsyncRELAI():
+        pass
 
 
 @pytest.mark.unit
