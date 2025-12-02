@@ -8,7 +8,7 @@ from typing import Any, Callable, List, Optional
 
 from ..flags import get_current_tracking
 from ..logger import Logger, get_current_logger, span_id_var
-from .graph import param_graph
+from .graph import get_current_param_graph
 
 
 def component(name: str, uid: Optional[str] = None, note: Optional[str] = None):
@@ -57,7 +57,7 @@ def component(name: str, uid: Optional[str] = None, note: Optional[str] = None):
 
                 for param1 in logger._component_active_params[span_id]:
                     for param2 in logger._component_active_params[span_id]:
-                        param_graph.add_edge(param1, param2)
+                        get_current_param_graph().add_edge(param1, param2)
                 logger._component_active_params.pop(span_id, None)
 
                 if uid is not None:

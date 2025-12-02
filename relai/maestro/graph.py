@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any
 
 
@@ -62,5 +64,24 @@ class Graph:
         return {"edges": {str(node): list(neighbors) for node, neighbors in self.edges.items()}}
 
 
-param_graph = Graph()
-"""Global instance of `Graph` used for parameter dependency tracking."""
+param_graph = Graph()  # Global instance of `Graph` used for parameter dependency tracking.
+param_graph_var: ContextVar[Graph] = ContextVar("Graph", default=param_graph)
+
+
+@contextmanager
+def set_current_param_graph(graph: Graph):
+    """
+    A context manager to set the param graph for the enclosed context.
+    """
+    token = param_graph_var.set(graph)
+    try:
+        yield
+    finally:
+        param_graph_var.reset(token)
+
+
+def get_current_param_graph() -> Graph:
+    """
+    Returns the param graph instance for the current execution context.
+    """
+    return param_graph_var.get()
