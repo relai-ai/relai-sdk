@@ -14,8 +14,8 @@ from relai.simulator import AgentLog, AsyncAgent, AsyncSimulator
 from relai.utils import no_trace
 
 from ..schema.visual import ConfigOptVizSchema, ConfigSchema, GraphOptVizSchema, ParamSchema, RunSchema
-from .graph import param_graph
-from .params import params
+from .graph import get_current_param_graph
+from .params import get_current_params
 from .utils import ProportionalSampler, extract_code, get_full_func_name
 
 
@@ -60,7 +60,7 @@ class Maestro:
         self.versions: list[dict] = [
             {
                 "idx": 0,
-                "params": copy.deepcopy(params),
+                "params": copy.deepcopy(get_current_params()),
                 "log": copy.deepcopy(self.log),
                 "visits": 0,
                 "average_score": 0.0,
@@ -121,7 +121,7 @@ class Maestro:
             }
         )
         self.current_version = selected_version
-        params.sync(self.versions[selected_version]["params"])
+        get_current_params().sync(self.versions[selected_version]["params"])
         self.log = copy.deepcopy(self.versions[selected_version]["log"])
 
     def _update_score(self, score: float):
@@ -181,7 +181,7 @@ class Maestro:
         """
         RELAI_EVAL_BATCH_SIZE = int(os.getenv("RELAI_EVAL_BATCH_SIZE", 10))
 
-        param_graph.clear()
+        get_current_param_graph().clear()
         test_cases = []
 
         async def _evaluate_awaitable(awaitable: Awaitable, critico: Critico) -> tuple[dict[str, Any], AgentLog]:
@@ -279,22 +279,24 @@ class Maestro:
 
         analysis, proposed_values = await self._client.propose_values(
             {
-                "params": params.export(),
+                "params": get_current_params().export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
                 "test_cases": test_cases[:batch_size],
                 "goal": self.goal,
-                "param_graph": param_graph.export(),
+                "param_graph": get_current_param_graph().export(),
             }
         )
 
         changes = []
         for param, value in proposed_values.items():
-            changes.append({"param": param, "previous value": params.__getattr__(param), "new value": value})
+            changes.append(
+                {"param": param, "previous value": get_current_params().__getattr__(param), "new value": value}
+            )
             if verbose:
                 print("=" * 60)
                 print("- proposed param change:", param)
                 print("")
-                print("- previous value:\n\n", params.__getattr__(param))
+                print("- previous value:\n\n", get_current_params().__getattr__(param))
                 print("")
                 print("- new value:\n\n", value)
                 print("=" * 60)
@@ -304,7 +306,7 @@ class Maestro:
         # Decide if the change should be kept
 
         for name, proposed_value in proposed_values.items():
-            params.update(name, proposed_value)
+            get_current_params().update(name, proposed_value)
 
         new_awaitables = []
         new_criticos = []
@@ -328,7 +330,7 @@ class Maestro:
             test_cases_updated[sample_id]["previous_eval_feedback"] = test_cases[sample_id]["eval_feedback"]
 
         for change in changes:
-            params.update(change["param"], change["previous value"])
+            get_current_params().update(change["param"], change["previous value"])
 
         previous_score = 0
         new_score = 0
@@ -340,7 +342,7 @@ class Maestro:
 
         review_decision = await self._client.review_values(
             {
-                "params": params.export(),
+                "params": get_current_params().export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
                 "proposal": changes,
                 "test_cases": test_cases_updated[:batch_size],
@@ -356,7 +358,7 @@ class Maestro:
             self.log[-1]["status"] = "ACCEPTED"
             self.log[-1]["review comment"] = review_decision["full comment"]
             for change in changes:
-                params.update(change["param"], change["new value"])
+                get_current_params().update(change["param"], change["new value"])
 
         else:
             self.log[-1]["status"] = "REJECTED"
@@ -466,7 +468,7 @@ class Maestro:
                 self.versions.append(
                     {
                         "idx": self.current_version,
-                        "params": copy.deepcopy(params),
+                        "params": copy.deepcopy(get_current_params()),
                         "log": copy.deepcopy(self.log[-self.max_memory :]),
                         "visits": 0,
                         "average_score": 0.0,
@@ -649,7 +651,7 @@ class Maestro:
                 "agent_name": get_full_func_name(self.agent_fn),
                 "agent_code": code,
                 "structure_description": description,
-                "params": params.export(),
+                "params": get_current_params().export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
                 "test_cases": test_cases,
                 "goal": self.goal,

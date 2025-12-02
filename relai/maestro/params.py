@@ -1,5 +1,7 @@
 import copy
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any, Optional
 
 from ..flags import get_current_tracking
@@ -59,7 +61,7 @@ class RegisteredParameters:
         Args:
             params (RegisteredParameters): Source parameter registry to copy from.
         """
-        self._params = copy.deepcopy(params._params)  # type: ignore
+        self._params = copy.deepcopy(get_current_params()._params)  # type: ignore
 
     def type(self, name: str) -> str:
         """
@@ -255,7 +257,27 @@ class RegisteredParameters:
         return exported_params
 
 
-params = RegisteredParameters()
+params = RegisteredParameters()  # for root context
+params_var: ContextVar[RegisteredParameters] = ContextVar("RegisteredParameters", default=params)
+
+
+@contextmanager
+def set_current_params(params: RegisteredParameters):
+    """
+    A context manager to set the params for the enclosed context.
+    """
+    token = params_var.set(params)
+    try:
+        yield
+    finally:
+        params_var.reset(token)
+
+
+def get_current_params() -> RegisteredParameters:
+    """
+    Returns the params instance for the current execution context.
+    """
+    return params_var.get()
 
 
 def register_param(name: str, type: str, init_value: Any, desc: str, allowed: Optional[list[Any]] = None):
@@ -269,4 +291,4 @@ def register_param(name: str, type: str, init_value: Any, desc: str, allowed: Op
         desc (str): Description of the parameter.
         allowed (Optional[list[Any]]): Optional list of allowed values.
     """
-    params.register(name=name, type=type, init_value=init_value, desc=desc, allowed=allowed)
+    get_current_params().register(name=name, type=type, init_value=init_value, desc=desc, allowed=allowed)
