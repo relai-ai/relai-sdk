@@ -1,9 +1,12 @@
 import asyncio
+import nest_asyncio
+nest_asyncio.apply()
+
 import copy
 import json
 import os
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Optional
+from typing import Any, Awaitable, Optional, Callable
 from uuid import uuid4
 
 from tqdm.auto import tqdm
@@ -134,8 +137,7 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
-            + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -380,7 +382,7 @@ class Maestro:
         explore_radius: int = 5,
         explore_factor: float = 0.5,
         verbose: bool = True,
-    ):
+    ) -> dict[str, Any]:
         """
         Optimize the configs (parameters) of the agent.
 
@@ -399,6 +401,9 @@ class Maestro:
 
         Raises:
             ValueError: If the input parameters are not valid.
+
+        Returns:
+            dict[str, Any]: Dictionary representation of all optimized parameters.
         """
         if not isinstance(batch_size, int) or batch_size <= 0:
             raise ValueError(f"`batch_size` must be a positive integer, got {batch_size}.")
@@ -589,12 +594,18 @@ class Maestro:
                         f"visualization id: {self.config_opt_viz_id}\n\n\n"
                     )
                 )
+        
+        return get_current_params().export()
 
     async def optimize_structure(
         self,
         total_rollouts: int,
+        batch_size: int = 10,
         description: Optional[str] = None,
         code_paths: Optional[list[str]] = None,
+        code: Optional[str] = None,
+        code_verifier: Optional[Callable[[str], tuple[bool, str]]] = None,
+        code_context: Optional[str] = None,
         verbose: bool = True,
     ) -> str:
         """
@@ -603,11 +614,23 @@ class Maestro:
 
         Args:
             total_rollouts (int): Total number of rollouts to use for optimization.
-                Generally, a moderate number of rollouts (e.g. 10-20) is required and recommended.
-                For agents with longer execution traces: Try reducing the number of rollouts if an error is raised.
+            batch_size (int): Number of rollouts to use in each batch.
+                Generally, a moderate batch_size (e.g. 10-20) is required and recommended.
+                For agents with longer execution traces: Try reducing batch_size if an error is raised.
             description (str, optional): Text description of the current structure/workflow/... of the agent.
             code_paths (list[str], optional): A list of paths corresponding to code files containing
                 the implementation of the agent.
+            code (str, optional): A string representing the code (python, json, etc.) of the agent.
+                If both `code_paths` and `code` are provided, `code_paths` will be ignored.
+            code_verifier (Callable[[str], tuple[bool, str]], optional):
+                A function that verifies the provided code and raises errors if any issues are found.
+                It takes a string (code) as input and returns a tuple of a boolean and a string.
+                If the boolean is True, the code is verified successfully; otherwise, the string contains
+                the issues identified during verification. The verifier will only be applied if `code` or
+                `code_paths` is provided, and the optimizer will try to generate code that passes the verification.
+            code_context (str, optional): Additional context or information about the code to assist generating
+                code that passes the verification. This is effective only when `code_verifier` is provided and is
+                especially useful if the code is in json or certain domain-specific languages/formats.
             verbose (bool): If True, additional information will be printed during the optimization.
                 Defaults to True.
 
@@ -619,10 +642,8 @@ class Maestro:
         print("  total_rollouts: ", total_rollouts)
         print("=" * 80 + "\n\n")
 
-        if code_paths is not None:
+        if code is None and code_paths is not None:
             code = extract_code(code_paths=code_paths)
-        else:
-            code = None
 
         sampler = ProportionalSampler(
             elements=self.setups,
@@ -644,6 +665,59 @@ class Maestro:
 
         test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
 
+        if batch_size < len(test_cases):
+            print ("Selecting and clustering samples for optimization...\n\n")
+            active_tags = {}
+
+            for test_case in test_cases:
+                _, active_tags = await self._client.process_test_case(
+                    {
+                        "test_case": test_case,
+                        "active_tags": active_tags,
+                        "threshold": batch_size * 3,
+                        "agent_name": get_full_func_name(self.agent_fn),
+                        "agent_code": code,
+                        "structure_description": description,
+                        "params": get_current_params().export(),
+                        "goal": self.goal,
+                        "constrained": False,
+                    }
+                )
+
+            for tag in active_tags:
+                active_tags[tag] = 0
+
+            tags_per_test_case = []
+            for test_case in test_cases:
+                tags, _ = await self._client.process_test_case(
+                    {
+                        "test_case": test_case,
+                        "active_tags": active_tags,
+                        "threshold": batch_size * 3,
+                        "agent_name": get_full_func_name(self.agent_fn),
+                        "agent_code": code,
+                        "structure_description": description,
+                        "params": get_current_params().export(),
+                        "goal": self.goal,
+                        "constrained": True,
+                    }
+                )
+                tags_per_test_case.append(tags)
+                for tag in tags:
+                    if tag in active_tags:
+                        active_tags[tag] += 1
+
+            to_sort = []
+            for idx in range(len(test_cases)):
+                score = 0
+                for tag in tags_per_test_case[idx]:
+                    score = max(score, active_tags.get(tag, 0))
+                to_sort.append((score, idx))
+            to_sort.sort(reverse=True)
+            selected_test_cases = [test_cases[idx] for score, idx in to_sort[:batch_size]]
+        else:
+            selected_test_cases = test_cases
+
         print("=" * 80)
         print("Optimizing structure...\n\n")
         suggestion = await self._client.optimize_structure(
@@ -653,11 +727,52 @@ class Maestro:
                 "structure_description": description,
                 "params": get_current_params().export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
-                "test_cases": test_cases,
+                "test_cases": selected_test_cases,
                 "goal": self.goal,
                 "max_correction_rounds": 1,
             }
         )
+
+        if (code is not None) and (code_verifier is not None):
+            print("Code verifier provided. Generating code...\n\n")
+            suggested_code = ""
+            verified = False
+            issues = None
+            correction_round = 0
+            max_correction_rounds = 3
+
+            while not verified and correction_round < max_correction_rounds:
+                suggested_code = await self._client.apply_structure_to_code(
+                    {
+                        "agent_name": get_full_func_name(self.agent_fn),
+                        "agent_code": code,
+                        "suggested_structure": suggestion,
+                        "previous_suggested_code": suggested_code,
+                        "issues": issues,
+                        "code_context": code_context,
+                    }
+                )
+                verified, issues = code_verifier(suggested_code)
+                if not verified:
+                    print(
+                        (
+                            f"Code verification failed in round {correction_round + 1}/{max_correction_rounds}\n"
+                            f"issues: {issues}\n\n"
+                        )
+                    )
+                correction_round += 1
+            
+            if verified:
+                print("Code verified successfully!\n\n")
+                suggestion = suggested_code
+            else:
+                print("Code verification failed.")
+                suggestion = (
+                    f"[Code verification failed]\n"
+                    f"<proposal>\n{suggestion}\n</proposal>\n\n"
+                    f"<suggested_code>\n{suggested_code}\n</suggested_code>\n\n"
+                    f"<issues>\n{issues}\n</issues>\n\n"
+                )
 
         async def sync_to_platform():
             payload = GraphOptVizSchema(
@@ -672,7 +787,7 @@ class Maestro:
                         eval_score=test_case["eval_score"],
                         eval_feedback=test_case["eval_feedback"],
                     )
-                    for test_case in test_cases
+                    for test_case in selected_test_cases
                 ],
             )
 

@@ -9,6 +9,13 @@ import httpx
 
 from ._exceptions import RELAIError
 from .schema.visual import ConfigOptVizSchema, GraphOptVizSchema
+from .temporary import (
+    ProcessTestCaseSchema,
+    ApplyStructureToCodeSchema,
+    process_test_case,
+    apply_structure_to_code,
+    client,
+)
 
 
 class BaseRELAI(ABC):
@@ -610,6 +617,36 @@ class AsyncRELAI(BaseRELAI):
                 return response["result"]
             else:
                 raise RELAIError(f"Maestro task failed: {status}")
+
+    async def process_test_case(self, data: dict) -> tuple[list[str], dict[str, int]]:
+        """
+        Process a new test case using the RELAI platform for later selecting samples for optimization.
+
+        Args:
+            data (dict): The data required for processing the test case.
+
+        Returns:
+            list[str]: A list of tags for the new test case.
+            dict[str, int]: A dictionary of active tags and tag counts.
+        """
+
+        "TODO: switch to call the endpoint; add sync version"
+        tags, updated_active_tags = process_test_case(ProcessTestCaseSchema.model_validate(data), client)
+        return tags, updated_active_tags
+
+    async def apply_structure_to_code(self, data: dict) -> str:
+        """
+        Applies the suggested structural changes to the agent code with RELAI platform.
+
+        Args:
+            data (dict): The data required for applying structural changes to the agent code.
+
+        Returns:
+            str: The updated agent code after applying the suggested structural changes.
+        """
+        "TODO: switch to call the endpoint; add sync version"
+        updated_code = apply_structure_to_code(ApplyStructureToCodeSchema.model_validate(data), client)
+        return updated_code
 
     async def optimize_structure(self, data: dict) -> str:
         """
