@@ -34,11 +34,19 @@ class Persona(BaseMocker):
         """<persona>{persona}</persona>\n"""
     )
 
+    additional_prompt_trajectory: ClassVar[str] = (
+        """Additionally, you should mimic the behavior of {identifier_in_trajectory} """
+        """in the following trajectory provided:\n"""
+        """<trajectory>\n{trajectory}\n</trajectory>\n"""
+    )
+
     def __init__(
         self,
         user_persona: str,
         intent: str | None = None,
         starting_message: str | None = None,
+        trajectory: str | None = None,
+        identifier_in_trajectory: str = "user",
         tools: list[Callable[..., Any]] | None = None,
         model: str | LitellmModel = "gpt-5-mini",
     ):
@@ -49,6 +57,11 @@ class Persona(BaseMocker):
             user_persona (str): The description of the persona's characteristics and behavior.
             intent (str | None): The intent or goal of the persona during interactions.
             starting_message (str | None): An optional initial message that the persona will use to start interactions.
+            trajectory (str | None): If provided, the persona will try to mimic the behavior of a certain entity
+                (defaults to "user") recorded in the trajectory. The entity to mimic can be configured through
+                `identifier_in_trajectory`.
+            identifier_in_trajectory (str): A string to identify the entity to mimic when a trajectory is provided.
+                Defaults to "user".
             tools (Optional[list[Tool]]): A list of tools that the persona can use.
             model (str | LitellmModel): The AI model to use for simulating the persona's behavior.
                 This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
@@ -60,6 +73,8 @@ class Persona(BaseMocker):
         self.user_persona = user_persona
         self.intent = intent
         self.starting_message = starting_message
+        self.trajectory = trajectory
+        self.identifier_in_trajectory = identifier_in_trajectory
         tools = tools or []
         self.tools: list[Tool] = [function_tool(tool) for tool in tools]
         self.model = model
@@ -68,10 +83,16 @@ class Persona(BaseMocker):
 
     @cached_property
     def agent(self) -> Agent:
+        instructions = self.prompt_template.format(intent=self.intent or self._func_doc, persona=self.user_persona)
+        if self.trajectory is not None:
+            instructions += self.additional_prompt_trajectory.format(
+                identifier_in_trajectory=self.identifier_in_trajectory, trajectory=self.trajectory
+            )
+
         return Agent(
             name=self.name,
             tools=self.tools,
-            instructions=self.prompt_template.format(intent=self.intent or self._func_doc, persona=self.user_persona),
+            instructions=instructions,
             model=self.model,
             output_type=self.output_type,
         )

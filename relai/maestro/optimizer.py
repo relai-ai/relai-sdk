@@ -1,12 +1,14 @@
 import asyncio
+
 import nest_asyncio
+
 nest_asyncio.apply()
 
 import copy
 import json
 import os
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Optional, Callable
+from typing import Any, Awaitable, Callable, Optional
 from uuid import uuid4
 
 from tqdm.auto import tqdm
@@ -137,7 +139,8 @@ class Maestro:
         """
         self.total_visits += 1
         self.versions[self.current_version]["average_score"] = (
-            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"] + score
+            self.versions[self.current_version]["average_score"] * self.versions[self.current_version]["visits"]
+            + score
         ) / (self.versions[self.current_version]["visits"] + 1.0)
         self.versions[self.current_version]["visits"] += 1
 
@@ -594,7 +597,7 @@ class Maestro:
                         f"visualization id: {self.config_opt_viz_id}\n\n\n"
                     )
                 )
-        
+
         return get_current_params().export()
 
     async def optimize_structure(
@@ -666,7 +669,7 @@ class Maestro:
         test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
 
         if batch_size < len(test_cases):
-            print ("Selecting and clustering samples for optimization...\n\n")
+            print("Selecting and clustering samples for optimization...\n\n")
             active_tags = {}
 
             for test_case in test_cases:
@@ -761,7 +764,7 @@ class Maestro:
                         )
                     )
                 correction_round += 1
-            
+
             if verified:
                 print("Code verified successfully!\n\n")
                 suggestion = suggested_code

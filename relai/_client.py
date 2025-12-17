@@ -10,11 +10,11 @@ import httpx
 from ._exceptions import RELAIError
 from .schema.visual import ConfigOptVizSchema, GraphOptVizSchema
 from .temporary import (
-    ProcessTestCaseSchema,
     ApplyStructureToCodeSchema,
-    process_test_case,
+    ProcessTestCaseSchema,
     apply_structure_to_code,
     client,
+    process_test_case,
 )
 
 
