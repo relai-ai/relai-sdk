@@ -242,7 +242,7 @@ class RELAI(BaseRELAI):
         """
         response = self._execute_maestro_task("api/v1/maestro/apply-structure-to-code/", data)
 
-        return response["code"]
+        return response["response"]["code"]
 
     def optimize_structure(self, data: dict) -> str:
         """
