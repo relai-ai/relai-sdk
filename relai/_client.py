@@ -207,6 +207,43 @@ class RELAI(BaseRELAI):
             else:
                 raise RELAIError(f"Maestro task failed: {status}")
 
+    def process_test_case(self, data: dict) -> tuple[list[str], dict[str, int]]:
+        """
+        Process a new test case using the RELAI platform for later selecting samples for optimization.
+
+        Args:
+            data (dict): The data required for processing the test case.
+
+        Returns:
+            list[str]: A list of tags for the new test case.
+            dict[str, int]: A dictionary of active tags and tag counts.
+
+        Raises:
+            RELAIError: If the processing request fails.
+        """
+        response = self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
+        tags = response["response"]["tags"]
+        updated_active_tags = response["response"]["updated_active_tags"]
+
+        return tags, updated_active_tags
+
+    def apply_structure_to_code(self, data: dict) -> str:
+        """
+        Applies the suggested structural changes to the agent code with RELAI platform.
+
+        Args:
+            data (dict): The data required for applying structural changes to the agent code.
+
+        Returns:
+            str: The updated agent code after applying the suggested structural changes.
+
+        Raises:
+            RELAIError: If the application request fails.
+        """
+        response = self._execute_maestro_task("api/v1/maestro/apply-structure-to-code/", data)
+
+        return response["response"]["code"]
+
     def optimize_structure(self, data: dict) -> str:
         """
         Optimizes the structure of an agent using the RELAI platform.
@@ -610,6 +647,43 @@ class AsyncRELAI(BaseRELAI):
                 return response["result"]
             else:
                 raise RELAIError(f"Maestro task failed: {status}")
+
+    async def process_test_case(self, data: dict) -> tuple[list[str], dict[str, int]]:
+        """
+        Process a new test case using the RELAI platform for later selecting samples for optimization.
+
+        Args:
+            data (dict): The data required for processing the test case.
+
+        Returns:
+            list[str]: A list of tags for the new test case.
+            dict[str, int]: A dictionary of active tags and tag counts.
+
+        Raises:
+            RELAIError: If the processing request fails.
+        """
+        response = await self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
+        tags = response["response"]["tags"]
+        updated_active_tags = response["response"]["updated_active_tags"]
+
+        return tags, updated_active_tags
+
+    async def apply_structure_to_code(self, data: dict) -> str:
+        """
+        Applies the suggested structural changes to the agent code with RELAI platform.
+
+        Args:
+            data (dict): The data required for applying structural changes to the agent code.
+
+        Returns:
+            str: The updated agent code after applying the suggested structural changes.
+
+        Raises:
+            RELAIError: If the application request fails.
+        """
+        response = await self._execute_maestro_task("api/v1/maestro/apply-structure-to-code/", data)
+
+        return response["response"]["code"]
 
     async def optimize_structure(self, data: dict) -> str:
         """
