@@ -683,7 +683,7 @@ class AsyncRELAI(BaseRELAI):
         """
         response = await self._execute_maestro_task("api/v1/maestro/apply-structure-to-code/", data)
 
-        return response["code"]
+        return response["response"]["code"]
 
     async def optimize_structure(self, data: dict) -> str:
         """
