@@ -35,8 +35,9 @@ class Persona(BaseMocker):
     )
 
     additional_prompt_trajectory: ClassVar[str] = (
-        """Additionally, you should mimic the behavior of {identifier_in_trajectory} """
-        """in the following trajectory provided:\n"""
+        """Additionally, you should repeat the exact behavior of {identifier_in_trajectory} """
+        """in the following trajectory provided as long as it seems appropriate in the current context. """
+        """The goal is to try recreating the same situation recorded in the trajectory.\n"""
         """<trajectory>\n{trajectory}\n</trajectory>\n"""
     )
 
