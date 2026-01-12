@@ -379,6 +379,7 @@ class Maestro:
         batch_size: int = 8,
         explore_radius: int = 5,
         explore_factor: float = 0.5,
+        group_id: str | None = None,
         verbose: bool = True,
     ) -> dict[str, Any]:
         """
@@ -394,6 +395,8 @@ class Maestro:
                 A higher `explore_factor` allocates more rollouts to discover new configs,
                 while a lower value allocates more rollouts to ensure the discovered configs are thoroughly evaluated.
                 Defaults to 0.5.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
             verbose (bool): If True, related information will be printed during the optimization step.
                 Defaults to True.
 
@@ -442,7 +445,8 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
-        group_id = "Maestro-Config-" + uuid4().hex
+        if group_id is None:
+            group_id = "Maestro-Config-" + uuid4().hex
         pbar = tqdm(total=total_rollouts, desc="Total rollouts consumed for config optimization")
 
         for round in range(num_rounds):
@@ -604,6 +608,7 @@ class Maestro:
         code: Optional[str] = None,
         code_verifier: Optional[Callable[[str], tuple[bool, str]]] = None,
         code_context: Optional[str] = None,
+        group_id: str | None = None,
         verbose: bool = True,
     ) -> str:
         """
@@ -629,6 +634,8 @@ class Maestro:
             code_context (str, optional): Additional context or information about the code to assist generating
                 code that passes the verification. This is effective only when `code_verifier` is provided and is
                 especially useful if the code is in json or certain domain-specific languages/formats.
+            group_id (str, optional): An optional group ID to associate all runs together. If not provided,
+                a new UUID will be generated.
             verbose (bool): If True, additional information will be printed during the optimization.
                 Defaults to True.
 
@@ -647,7 +654,8 @@ class Maestro:
             elements=self.setups,
             weights=[setup["weight"] for setup in self.setups],
         )
-        group_id = "Maestro-Struct-" + uuid4().hex
+        if group_id is None:
+            group_id = "Maestro-Struct-" + uuid4().hex
 
         print("=" * 80)
         print("Running the agent to collect traces...\n\n")
