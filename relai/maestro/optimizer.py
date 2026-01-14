@@ -816,20 +816,29 @@ class Maestro:
 
             if verified:
                 print("Code verified successfully!\n\n")
+                suggestion_to_upload = (
+                    f"[Code verified successfully]\n"
+                    f"<proposal>\n{suggestion}\n</proposal>\n\n"
+                    f"<suggested_code>\n{suggested_code}\n</suggested_code>\n\n"
+                    f"<issues>\n{issues}\n</issues>\n\n"
+                )
                 suggestion = suggested_code
             else:
                 print("Code verification failed.")
-                suggestion = (
+                suggestion_to_upload = (
                     f"[Code verification failed]\n"
                     f"<proposal>\n{suggestion}\n</proposal>\n\n"
                     f"<suggested_code>\n{suggested_code}\n</suggested_code>\n\n"
                     f"<issues>\n{issues}\n</issues>\n\n"
                 )
+                suggestion = suggestion_to_upload
+        else:
+            suggestion_to_upload = suggestion
 
         async def sync_to_platform():
             payload = GraphOptVizSchema(
                 name=self.name,
-                proposal=suggestion,
+                proposal=suggestion_to_upload,
                 runs=[
                     RunSchema(
                         log=test_case["log"],
