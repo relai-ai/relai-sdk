@@ -231,6 +231,8 @@ class Maestro:
         verbose: bool = True,
         group_id: str | None = None,
         pbar: tqdm | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
     ) -> bool:
         """
         An iterate step will propose changes to the current version of the agent and
@@ -249,6 +251,8 @@ class Maestro:
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
             pbar (tqdm, optional): A progress bar to display the progress of the iteration. Defaults to None.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
 
         Returns:
             bool: True if the proposed changes pass the preliminary examination and False otherwise.
@@ -269,7 +273,14 @@ class Maestro:
         for setup in setups:
             simulator = setup["simulator"]
             critico = setup["critico"]
-            awaitables.append(simulator.run(num_runs=1, group_id=group_id))
+            awaitables.append(
+                simulator.run(
+                    num_runs=1,
+                    group_id=group_id,
+                    agent_version_uuid=agent_version_uuid,
+                    environment_uuid=environment_uuid,
+                )
+            )
             criticos.append(critico)
 
         test_cases, agent_logs = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
@@ -313,7 +324,14 @@ class Maestro:
         for test_case, agent_log, setup in zip(test_cases, agent_logs, setups):
             simulator = setup["simulator"]
             critico = setup["critico"]
-            new_awaitables.append(simulator.rerun([agent_log.simulation_tape], group_id=group_id))
+            new_awaitables.append(
+                simulator.rerun(
+                    [agent_log.simulation_tape],
+                    group_id=group_id,
+                    agent_version_uuid=agent_version_uuid,
+                    environment_uuid=environment_uuid,
+                )
+            )
             new_criticos.append(critico)
 
         test_cases_updated, _ = await self._evaluate(
@@ -381,6 +399,8 @@ class Maestro:
         explore_factor: float = 0.5,
         group_id: str | None = None,
         verbose: bool = True,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
     ) -> dict[str, Any]:
         """
         Optimize the configs (parameters) of the agent.
@@ -399,6 +419,8 @@ class Maestro:
                 a new UUID will be generated.
             verbose (bool): If True, related information will be printed during the optimization step.
                 Defaults to True.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
 
         Raises:
             ValueError: If the input parameters are not valid.
@@ -465,7 +487,13 @@ class Maestro:
             new_version = False
             for _ in range(iterate_steps):
                 changes_accepted = await self._iterate(
-                    batch_size=group_size, verbose=verbose, sampler=sampler, group_id=group_id, pbar=pbar
+                    batch_size=group_size,
+                    verbose=verbose,
+                    sampler=sampler,
+                    group_id=group_id,
+                    pbar=pbar,
+                    agent_version_uuid=agent_version_uuid,
+                    environment_uuid=environment_uuid,
                 )
                 if changes_accepted:
                     new_version = True
@@ -495,7 +523,14 @@ class Maestro:
                 for setup in setups:
                     simulator = setup["simulator"]
                     critico = setup["critico"]
-                    awaitables.append(simulator.run(num_runs=1, group_id=group_id))
+                    awaitables.append(
+                        simulator.run(
+                            num_runs=1,
+                            group_id=group_id,
+                            agent_version_uuid=agent_version_uuid,
+                            environment_uuid=environment_uuid,
+                        )
+                    )
                     criticos.append(critico)
 
                 test_cases_validation, _ = await self._evaluate(
@@ -610,6 +645,8 @@ class Maestro:
         code_context: Optional[str] = None,
         group_id: str | None = None,
         verbose: bool = True,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
     ) -> str:
         """
         Propose structural changes (i.e. changes that cannot be achieved by setting parameters alone) to
@@ -638,6 +675,8 @@ class Maestro:
                 a new UUID will be generated.
             verbose (bool): If True, additional information will be printed during the optimization.
                 Defaults to True.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
 
         Returns:
             str: Suggestion for structural changes to the agent.
@@ -666,7 +705,14 @@ class Maestro:
         for setup in setups:
             simulator = setup["simulator"]
             critico = setup["critico"]
-            awaitables.append(simulator.run(num_runs=1, group_id=group_id))
+            awaitables.append(
+                simulator.run(
+                    num_runs=1,
+                    group_id=group_id,
+                    agent_version_uuid=agent_version_uuid,
+                    environment_uuid=environment_uuid,
+                )
+            )
             criticos.append(critico)
 
         test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)

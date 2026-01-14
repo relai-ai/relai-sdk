@@ -203,7 +203,13 @@ class SyncSimulator(BaseSimulator):
             raise ValueError("client must be provided if log_runs is True")
         self.client = client
 
-    def run(self, num_runs: int, group_id: str | None = None) -> list[AgentLog]:
+    def run(
+        self,
+        num_runs: int,
+        group_id: str | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
+    ) -> list[AgentLog]:
         """
         Run the simulator for a specified number of times.
 
@@ -211,6 +217,8 @@ class SyncSimulator(BaseSimulator):
             num_runs (int): The number of simulation runs to execute.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
@@ -233,13 +241,21 @@ class SyncSimulator(BaseSimulator):
                         serialized_simulation_config={
                             k: v.serialize() for k, v in tape.simulation_config.items() if isinstance(v, Serializable)
                         },
+                        agent_version_uuid=agent_version_uuid,
+                        environment_uuid=environment_uuid,
                     )
                 agent_logs.append(agent_log)
                 tape.add_record("relai_log", get_current_logger().serialize())
         tracking_off()
         return agent_logs
 
-    def rerun(self, simulation_tapes: list[SimulationTape], group_id: str | None = None) -> list[AgentLog]:
+    def rerun(
+        self,
+        simulation_tapes: list[SimulationTape],
+        group_id: str | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
+    ) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
 
@@ -248,6 +264,8 @@ class SyncSimulator(BaseSimulator):
                 the agent in an environment identical to a previous run and is useful for debugging and optimization.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
@@ -271,6 +289,8 @@ class SyncSimulator(BaseSimulator):
                             for k, v in new_tape.simulation_config.items()
                             if isinstance(v, Serializable)
                         },
+                        agent_version_uuid=agent_version_uuid,
+                        environment_uuid=environment_uuid,
                     )
                 new_tape.add_record("relai_log", get_current_logger().serialize())
         tracking_off()
@@ -305,13 +325,21 @@ class AsyncSimulator(BaseSimulator):
             raise ValueError("client must be provided if log_runs is True")
         self.client = client
 
-    async def run(self, num_runs: int, group_id: str | None = None) -> list[AgentLog]:
+    async def run(
+        self,
+        num_runs: int,
+        group_id: str | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
+    ) -> list[AgentLog]:
         """Run the simulator for a specified number of times.
 
         Args:
             num_runs (int): The number of simulation runs to execute.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
@@ -332,13 +360,21 @@ class AsyncSimulator(BaseSimulator):
                         serialized_simulation_config={
                             k: v.serialize() for k, v in tape.simulation_config.items() if isinstance(v, Serializable)
                         },
+                        agent_version_uuid=agent_version_uuid,
+                        environment_uuid=environment_uuid,
                     )
                 agent_logs.append(agent_log)
                 tape.add_record("relai_log", get_current_logger().serialize())
         tracking_off()
         return agent_logs
 
-    async def rerun(self, simulation_tapes: list[SimulationTape], group_id: str | None = None) -> list[AgentLog]:
+    async def rerun(
+        self,
+        simulation_tapes: list[SimulationTape],
+        group_id: str | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
+    ) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
 
@@ -347,6 +383,8 @@ class AsyncSimulator(BaseSimulator):
                 the agent in an environment identical to a previous run and is useful for debugging and optimization.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
+            agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
+            environment_uuid (str, optional): An optional environment UUID to associate with the runs.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
@@ -370,6 +408,8 @@ class AsyncSimulator(BaseSimulator):
                             for k, v in new_tape.simulation_config.items()
                             if isinstance(v, Serializable)
                         },
+                        agent_version_uuid=agent_version_uuid,
+                        environment_uuid=environment_uuid,
                     )
                 new_tape.add_record("relai_log", get_current_logger().serialize())
         tracking_off()
