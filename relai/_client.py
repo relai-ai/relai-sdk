@@ -335,6 +335,8 @@ class RELAI(BaseRELAI):
         agent_outputs: dict[str, Any] | None = None,
         extras: dict[str, Any] | None = None,
         serialized_simulation_config: dict[str, Any] | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
     ) -> None:
         agent_inputs = agent_inputs or {}
         agent_outputs = agent_outputs or {}
@@ -349,6 +351,8 @@ class RELAI(BaseRELAI):
                 "agent_outputs": agent_outputs,
                 "extras": extras,
                 "serialized_simulation_config": serialized_simulation_config,
+                "agent_version_uuid": agent_version_uuid,
+                "environment_uuid": environment_uuid,
             },
         )
 
@@ -776,6 +780,8 @@ class AsyncRELAI(BaseRELAI):
         agent_outputs: dict[str, Any] | None = None,
         extras: dict[str, Any] | None = None,
         serialized_simulation_config: dict[str, Any] | None = None,
+        agent_version_uuid: str | None = None,
+        environment_uuid: str | None = None,
     ) -> None:
         agent_inputs = agent_inputs or {}
         agent_outputs = agent_outputs or {}
@@ -790,6 +796,8 @@ class AsyncRELAI(BaseRELAI):
                 "agent_outputs": agent_outputs,
                 "extras": extras,
                 "serialized_simulation_config": serialized_simulation_config,
+                "agent_version_uuid": agent_version_uuid,
+                "environment_uuid": environment_uuid,
             },
         )
 

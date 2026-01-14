@@ -30,7 +30,7 @@ dependencies = [
     "opentelemetry-instrumentation>=0.58b0",
     "openinference-instrumentation>=0.1.38",
 ]
-version = "0.3.18"
+version = "0.3.19"
 
 [tool.setuptools.packages.find]
 where = ["."]
