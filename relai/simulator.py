@@ -2,6 +2,7 @@ import functools
 import inspect
 import random
 import sys
+import traceback
 from collections.abc import Callable, Coroutine, Generator, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -229,8 +230,8 @@ class SyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = self.agent_fn(tape)
-                    except Exception as e:
-                        agent_outputs = {"[Exception]": repr(e)}
+                    except Exception:
+                        agent_outputs = {"[Exception]": traceback.format_exc()}
                 else:
                     agent_outputs = self.agent_fn(tape)
 
@@ -286,8 +287,8 @@ class SyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = self.agent_fn(new_tape)
-                    except Exception as e:
-                        agent_outputs = {"[Exception]": repr(e)}
+                    except Exception:
+                        agent_outputs = {"[Exception]": traceback.format_exc()}
                 else:
                     agent_outputs = self.agent_fn(new_tape)
 
@@ -368,8 +369,8 @@ class AsyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = await self.agent_fn(tape)
-                    except Exception as e:
-                        agent_outputs = {"[Exception]": repr(e)}
+                    except Exception:
+                        agent_outputs = {"[Exception]": traceback.format_exc()}
                 else:
                     agent_outputs = await self.agent_fn(tape)
 
@@ -423,8 +424,8 @@ class AsyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = await self.agent_fn(new_tape)
-                    except Exception as e:
-                        agent_outputs = {"[Exception]": repr(e)}
+                    except Exception:
+                        agent_outputs = {"[Exception]": traceback.format_exc()}
                 else:
                     agent_outputs = await self.agent_fn(new_tape)
 
