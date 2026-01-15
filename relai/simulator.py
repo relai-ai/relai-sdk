@@ -209,6 +209,7 @@ class SyncSimulator(BaseSimulator):
         group_id: str | None = None,
         agent_version_uuid: str | None = None,
         environment_uuid: str | None = None,
+        catch_exception: bool = False,
     ) -> list[AgentLog]:
         """
         Run the simulator for a specified number of times.
@@ -225,7 +226,14 @@ class SyncSimulator(BaseSimulator):
         tracking_on()
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
-                agent_outputs = self.agent_fn(tape)
+                if catch_exception:
+                    try:
+                        agent_outputs = self.agent_fn(tape)
+                    except Exception as e:
+                        agent_outputs = {"[Exception]": repr(e)}
+                else:
+                    agent_outputs = self.agent_fn(tape)
+
                 if not isinstance(agent_outputs, dict):
                     raise TypeError("agent_fn must return an instance of AgentOutputs")
                 agent_log = AgentLog(simulation_tape=tape, agent_outputs=agent_outputs)
@@ -255,6 +263,7 @@ class SyncSimulator(BaseSimulator):
         group_id: str | None = None,
         agent_version_uuid: str | None = None,
         environment_uuid: str | None = None,
+        catch_exception: bool = False,
     ) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
@@ -266,6 +275,7 @@ class SyncSimulator(BaseSimulator):
                 a new UUID will be generated.
             agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
             environment_uuid (str, optional): An optional environment UUID to associate with the runs.
+            catch_exception (bool, optional): Whether to catch exceptions during simulation runs. Defaults to False.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
@@ -273,7 +283,14 @@ class SyncSimulator(BaseSimulator):
         for tape in simulation_tapes:
             new_tape = tape.copy()
             with _simulate(new_tape.simulation_config), create_logging_span(new_tape.id):
-                agent_outputs = self.agent_fn(new_tape)
+                if catch_exception:
+                    try:
+                        agent_outputs = self.agent_fn(new_tape)
+                    except Exception as e:
+                        agent_outputs = {"[Exception]": repr(e)}
+                else:
+                    agent_outputs = self.agent_fn(new_tape)
+
                 agent_log = AgentLog(simulation_tape=new_tape, agent_outputs=agent_outputs)
                 agent_logs.append(agent_log)
                 if self.log_runs and self.client is not None:
@@ -331,6 +348,7 @@ class AsyncSimulator(BaseSimulator):
         group_id: str | None = None,
         agent_version_uuid: str | None = None,
         environment_uuid: str | None = None,
+        catch_exception: bool = False,
     ) -> list[AgentLog]:
         """Run the simulator for a specified number of times.
 
@@ -340,13 +358,21 @@ class AsyncSimulator(BaseSimulator):
                 a new UUID will be generated.
             agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
             environment_uuid (str, optional): An optional environment UUID to associate with the runs.
+            catch_exception (bool): Whether to catch errors during simulation runs. Defaults to False.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
         tracking_on()
         for tape, config in self.tape_and_config_generator(num_runs):
             with _simulate(config), create_logging_span(tape.id):
-                agent_outputs = await self.agent_fn(tape)
+                if catch_exception:
+                    try:
+                        agent_outputs = await self.agent_fn(tape)
+                    except Exception as e:
+                        agent_outputs = {"[Exception]": repr(e)}
+                else:
+                    agent_outputs = await self.agent_fn(tape)
+
                 agent_log = AgentLog(simulation_tape=tape, agent_outputs=agent_outputs)
                 if self.log_runs and self.client is not None:
                     trace_id = await self.client.upload_trace(data=get_current_logger().to_openinference())
@@ -374,6 +400,7 @@ class AsyncSimulator(BaseSimulator):
         group_id: str | None = None,
         agent_version_uuid: str | None = None,
         environment_uuid: str | None = None,
+        catch_exception: bool = False,
     ) -> list[AgentLog]:
         """
         Rerun the simulator for a list of simulation tapes.
@@ -385,6 +412,7 @@ class AsyncSimulator(BaseSimulator):
                 a new UUID will be generated.
             agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
             environment_uuid (str, optional): An optional environment UUID to associate with the runs.
+            catch_exception (bool): Whether to catch exceptions during simulation runs. Defaults to False.
         """
         agent_logs: list[AgentLog] = []
         group_id = ("Simulate-" + uuid4().hex) if group_id is None else group_id
@@ -392,7 +420,14 @@ class AsyncSimulator(BaseSimulator):
         for tape in simulation_tapes:
             new_tape = tape.copy()
             with _simulate(new_tape.simulation_config), create_logging_span(new_tape.id):
-                agent_outputs = await self.agent_fn(new_tape)
+                if catch_exception:
+                    try:
+                        agent_outputs = await self.agent_fn(new_tape)
+                    except Exception as e:
+                        agent_outputs = {"[Exception]": repr(e)}
+                else:
+                    agent_outputs = await self.agent_fn(new_tape)
+
                 agent_log = AgentLog(simulation_tape=new_tape, agent_outputs=agent_outputs)
                 agent_logs.append(agent_log)
                 if self.log_runs and self.client is not None:
