@@ -314,9 +314,6 @@ class Maestro:
             }
         )
 
-        print(analysis)
-        print(proposed_values)
-
         changes = []
         for param, value in proposed_values.items():
             changes.append(
@@ -506,8 +503,6 @@ class Maestro:
 
             new_version = False
             for _ in range(iterate_steps):
-                print(self.versions)
-                print(self.current_version)
                 changes_accepted = await self._iterate(
                     batch_size=group_size,
                     verbose=verbose,
@@ -538,8 +533,6 @@ class Maestro:
             # Evaluate existing versions
             for _ in range(select_steps):
                 await self._select(explore=True)
-
-                print("[Current Version]", self.current_version)
 
                 setups = sampler.sample(group_size)
                 awaitables = []
