@@ -231,7 +231,7 @@ class SyncSimulator(BaseSimulator):
                     try:
                         agent_outputs = self.agent_fn(tape)
                     except Exception:
-                        agent_outputs = {"[Exception]": traceback.format_exc()}
+                        agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
                 else:
                     agent_outputs = self.agent_fn(tape)
 
@@ -288,7 +288,7 @@ class SyncSimulator(BaseSimulator):
                     try:
                         agent_outputs = self.agent_fn(new_tape)
                     except Exception:
-                        agent_outputs = {"[Exception]": traceback.format_exc()}
+                        agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
                 else:
                     agent_outputs = self.agent_fn(new_tape)
 
@@ -370,7 +370,7 @@ class AsyncSimulator(BaseSimulator):
                     try:
                         agent_outputs = await self.agent_fn(tape)
                     except Exception:
-                        agent_outputs = {"[Exception]": traceback.format_exc()}
+                        agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
                 else:
                     agent_outputs = await self.agent_fn(tape)
 
@@ -425,7 +425,7 @@ class AsyncSimulator(BaseSimulator):
                     try:
                         agent_outputs = await self.agent_fn(new_tape)
                     except Exception:
-                        agent_outputs = {"[Exception]": traceback.format_exc()}
+                        agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
                 else:
                     agent_outputs = await self.agent_fn(new_tape)
 
