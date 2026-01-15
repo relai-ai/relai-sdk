@@ -186,6 +186,21 @@ class Maestro:
 
         async def _evaluate_awaitable(awaitable: Awaitable, critico: Critico) -> tuple[dict[str, Any], AgentLog]:
             agent_log: AgentLog = (await awaitable)[0]
+
+            # Handle errors gracefully
+            if agent_log.agent_outputs.get("[Exception]") is not None:
+                return {
+                    "input": str(agent_log.simulation_tape.agent_inputs),
+                    "log": agent_log.simulation_tape.extras["relai_log"],
+                    "trace_id": agent_log.trace_id,
+                    "output": self._serialize_agent_outputs(agent_log.agent_outputs),
+                    "eval_score": 0.0,
+                    "eval_feedback": (
+                        "The following error is encountered during agent execution and should be fixed:\n"
+                        f"{agent_log.agent_outputs.get('[Exception]')}"
+                    ),
+                }, agent_log
+
             with no_trace():
                 eval_result: CriticoLog = (await critico.evaluate([agent_log]))[0]
 
@@ -279,6 +294,7 @@ class Maestro:
                     group_id=group_id,
                     agent_version_uuid=agent_version_uuid,
                     environment_uuid=environment_uuid,
+                    catch_exception=True,
                 )
             )
             criticos.append(critico)
@@ -330,6 +346,7 @@ class Maestro:
                     group_id=group_id,
                     agent_version_uuid=agent_version_uuid,
                     environment_uuid=environment_uuid,
+                    catch_exception=True,
                 )
             )
             new_criticos.append(critico)
@@ -529,6 +546,7 @@ class Maestro:
                             group_id=group_id,
                             agent_version_uuid=agent_version_uuid,
                             environment_uuid=environment_uuid,
+                            catch_exception=True,
                         )
                     )
                     criticos.append(critico)
@@ -711,6 +729,7 @@ class Maestro:
                     group_id=group_id,
                     agent_version_uuid=agent_version_uuid,
                     environment_uuid=environment_uuid,
+                    catch_exception=True,
                 )
             )
             criticos.append(critico)

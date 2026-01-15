@@ -54,14 +54,14 @@ class RegisteredParameters:
         memo[id(self)] = ret
         return ret
 
-    def sync(self, params: dict):
+    def sync(self, params: "RegisteredParameters"):
         """
         Replaces the current parameter registry with a deep copy of another one.
 
         Args:
             params (RegisteredParameters): Source parameter registry to copy from.
         """
-        self._params = copy.deepcopy(get_current_params()._params)  # type: ignore
+        self._params = copy.deepcopy(params._params)
 
     def type(self, name: str) -> str:
         """
