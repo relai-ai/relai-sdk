@@ -221,11 +221,14 @@ class RELAI(BaseRELAI):
         Raises:
             RELAIError: If the processing request fails.
         """
-        response = self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
-        tags = response["response"]["tags"]
-        updated_active_tags = response["response"]["updated_active_tags"]
+        try:
+            response = self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
+            tags = response["response"]["tags"]
+            updated_active_tags = response["response"]["updated_active_tags"]
 
-        return tags, updated_active_tags
+            return tags, updated_active_tags
+        except Exception:
+            return [], data["active_tags"]
 
     def apply_structure_to_code(self, data: dict) -> str:
         """
@@ -666,11 +669,13 @@ class AsyncRELAI(BaseRELAI):
         Raises:
             RELAIError: If the processing request fails.
         """
-        response = await self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
-        tags = response["response"]["tags"]
-        updated_active_tags = response["response"]["updated_active_tags"]
-
-        return tags, updated_active_tags
+        try:
+            response = await self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
+            tags = response["response"]["tags"]
+            updated_active_tags = response["response"]["updated_active_tags"]
+            return tags, updated_active_tags
+        except Exception:
+            return [], data["active_tags"]
 
     async def apply_structure_to_code(self, data: dict) -> str:
         """
