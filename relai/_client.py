@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import time
 from abc import ABC, abstractmethod
@@ -222,10 +223,14 @@ class RELAI(BaseRELAI):
             RELAIError: If the processing request fails.
         """
         response = self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
-        tags = response["response"]["tags"]
-        updated_active_tags = response["response"]["updated_active_tags"]
+        try:
+            tags = response["response"]["tags"]
+            updated_active_tags = response["response"]["updated_active_tags"]
 
-        return tags, updated_active_tags
+            return tags, updated_active_tags
+        except Exception:
+            logging.debug("Error from process_test_case", extra={"data": data, "response": response})
+            return [], data["active_tags"]
 
     def apply_structure_to_code(self, data: dict) -> str:
         """
@@ -667,10 +672,13 @@ class AsyncRELAI(BaseRELAI):
             RELAIError: If the processing request fails.
         """
         response = await self._execute_maestro_task("api/v1/maestro/process-test-case/", data)
-        tags = response["response"]["tags"]
-        updated_active_tags = response["response"]["updated_active_tags"]
-
-        return tags, updated_active_tags
+        try:
+            tags = response["response"]["tags"]
+            updated_active_tags = response["response"]["updated_active_tags"]
+            return tags, updated_active_tags
+        except Exception:
+            logging.debug("Error from process_test_case", extra={"data": data, "response": response})
+            return [], data["active_tags"]
 
     async def apply_structure_to_code(self, data: dict) -> str:
         """

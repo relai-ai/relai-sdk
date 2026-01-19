@@ -687,8 +687,8 @@ class Maestro:
                 the issues identified during verification. The verifier will only be applied if `code` or
                 `code_paths` is provided, and the optimizer will try to generate code that passes the verification.
             code_context (str, optional): Additional context or information about the code to assist generating
-                code that passes the verification. This is effective only when `code_verifier` is provided and is
-                especially useful if the code is in json or certain domain-specific languages/formats.
+                code that passes the verification. This is especially useful when `code_verifier` is provided and
+                when the code is in json or certain domain-specific languages/formats.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
             verbose (bool): If True, additional information will be printed during the optimization.
@@ -794,7 +794,9 @@ class Maestro:
         suggestion = await self._client.optimize_structure(
             {
                 "agent_name": get_full_func_name(self.agent_fn),
-                "agent_code": code,
+                "agent_code": code
+                if code_context is None
+                else (f"{code}\nAdditional context about the code:\n<context>\n{code_context}\n</context>"),
                 "structure_description": description,
                 "params": get_current_params().export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
