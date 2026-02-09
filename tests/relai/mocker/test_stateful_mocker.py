@@ -37,7 +37,7 @@ def test_stateful_mocker_updates_state_in_place(mocker) -> None:
 @pytest.mark.unit
 def test_stateful_mocker_ignores_invalid_update_payload(mocker) -> None:
     state = {"count": 3, "status": "steady"}
-    mocker_instance = StatefulMocker(state_fields=["count", "status"], model="test-model")
+    mocker_instance = StatefulMocker(state_fields=["count", "status"], model="test-model", max_validation_retries=0)
 
     mocker.patch(
         "relai.mocker.stateful_mocker.Runner.run_sync",
@@ -47,10 +47,8 @@ def test_stateful_mocker_ignores_invalid_update_payload(mocker) -> None:
         ],
     )
 
-    output = mocker_instance._run(state)
-
-    assert output == "tool-output"
-    assert state == {"count": 3, "status": "steady"}
+    with pytest.raises(ValueError, match="State update validation failed"):
+        mocker_instance._run(state)
 
 
 @pytest.mark.asyncio
@@ -138,6 +136,39 @@ def test_stateful_mocker_retries_on_output_validation_failure(mocker) -> None:
 
     assert output == "tool-output"
     assert run_sync.call_count == 2
+
+
+@pytest.mark.unit
+def test_stateful_mocker_retries_on_update_validation_failure(mocker) -> None:
+    state = {"count": 1, "status": "old"}
+    state_schema = {
+        "type": "object",
+        "properties": {
+            "count": {"type": "integer"},
+            "status": {"type": "string"},
+        },
+        "required": ["count", "status"],
+    }
+    mocker_instance = StatefulMocker(
+        state_fields=["count", "status"],
+        state_schema=state_schema,
+        max_validation_retries=1,
+    )
+
+    run_sync = mocker.patch(
+        "relai.mocker.stateful_mocker.Runner.run_sync",
+        side_effect=[
+            DummyResult(final_output="tool-output"),
+            DummyResult(final_output='{"count": "oops"}'),
+            DummyResult(final_output='{"count": 2}'),
+        ],
+    )
+
+    output = mocker_instance._run(state)
+
+    assert output == "tool-output"
+    assert state == {"count": 2, "status": "old"}
+    assert run_sync.call_count == 3
 
 
 @pytest.mark.unit

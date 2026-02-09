@@ -86,6 +86,11 @@ class StatefulMocker(BaseMocker):
 
     @cached_property
     def agent(self) -> Agent:
+        output_type = None
+        if self.output_model is not None:
+            output_type = AgentOutputSchema(self.output_model, strict_json_schema=False)
+        elif self.output_type is not None:
+            output_type = AgentOutputSchema(self.output_type, strict_json_schema=False)
         return Agent(
             name=self.name,
             instructions=self.prompt_template.format(
@@ -94,9 +99,7 @@ class StatefulMocker(BaseMocker):
                 state_fields=", ".join(self.state_fields),
             ),
             model=self.model,
-            output_type=AgentOutputSchema(self.output_type, strict_json_schema=False)
-            if self.output_type is not None
-            else None,
+            output_type=output_type,
         )
 
     @cached_property
@@ -166,6 +169,19 @@ class StatefulMocker(BaseMocker):
             if field in updates:
                 simulation_state[field] = updates[field]
 
+    def _validate_updated_snapshot(self, base_snapshot: dict[str, Any], updates: dict[str, Any]) -> str | None:
+        if self.state_model is None and self.state_schema is None:
+            return None
+        updated_snapshot = dict(base_snapshot)
+        for field in self.state_fields:
+            if field in updates:
+                updated_snapshot[field] = updates[field]
+        try:
+            self._validate_state_snapshot(updated_snapshot)
+        except ValueError as exc:
+            return str(exc)
+        return None
+
     def _run_with_validation(
         self,
         simulation_state: dict[str, Any],
@@ -234,25 +250,35 @@ class StatefulMocker(BaseMocker):
             return output
         state_snapshot = self._snapshot_state(simulation_state)
 
-        update_input = str(
-            {
-                "args": args,
-                "kwargs": kwargs,
-                "output": output,
-                "state": state_snapshot,
-            }
-        )
-        with no_trace():
-            update_result = Runner.run_sync(
-                self.update_agent,
-                update_input,
-                session=self._update_session,
+        validation_errors: list[str] = []
+        attempts = self.max_validation_retries + 1
+        for _ in range(attempts):
+            update_input = str(
+                {
+                    "args": args,
+                    "kwargs": kwargs,
+                    "output": output,
+                    "state": state_snapshot,
+                    "validation_errors": validation_errors,
+                }
             )
-        updates = self._parse_state_updates(update_result.final_output)
-        if isinstance(updates, dict):
-            self._apply_state_updates(simulation_state, updates)
+            with no_trace():
+                update_result = Runner.run_sync(
+                    self.update_agent,
+                    update_input,
+                    session=self._update_session,
+                )
+            updates = self._parse_state_updates(update_result.final_output)
+            if not isinstance(updates, dict):
+                validation_errors = ["Update parsing failed: expected a JSON object."]
+                continue
+            error = self._validate_updated_snapshot(state_snapshot, updates)
+            if error is None:
+                self._apply_state_updates(simulation_state, updates)
+                return output
+            validation_errors = [error]
 
-        return output
+        raise ValueError(f"State update validation failed after {attempts} attempts: {validation_errors[-1]}")
 
     async def _arun(self, simulation_state: dict[str, Any], *args: Any, **kwargs: Any) -> Any:
         output = await self._arun_with_validation(simulation_state, *args, **kwargs)
@@ -260,25 +286,35 @@ class StatefulMocker(BaseMocker):
             return output
         state_snapshot = self._snapshot_state(simulation_state)
 
-        update_input = str(
-            {
-                "args": args,
-                "kwargs": kwargs,
-                "output": output,
-                "state": state_snapshot,
-            }
-        )
-        with no_trace():
-            update_result = await Runner.run(
-                self.update_agent,
-                update_input,
-                session=self._update_session,
+        validation_errors: list[str] = []
+        attempts = self.max_validation_retries + 1
+        for _ in range(attempts):
+            update_input = str(
+                {
+                    "args": args,
+                    "kwargs": kwargs,
+                    "output": output,
+                    "state": state_snapshot,
+                    "validation_errors": validation_errors,
+                }
             )
-        updates = self._parse_state_updates(update_result.final_output)
-        if isinstance(updates, dict):
-            self._apply_state_updates(simulation_state, updates)
+            with no_trace():
+                update_result = await Runner.run(
+                    self.update_agent,
+                    update_input,
+                    session=self._update_session,
+                )
+            updates = self._parse_state_updates(update_result.final_output)
+            if not isinstance(updates, dict):
+                validation_errors = ["Update parsing failed: expected a JSON object."]
+                continue
+            error = self._validate_updated_snapshot(state_snapshot, updates)
+            if error is None:
+                self._apply_state_updates(simulation_state, updates)
+                return output
+            validation_errors = [error]
 
-        return output
+        raise ValueError(f"State update validation failed after {attempts} attempts: {validation_errors[-1]}")
 
     def serialize(self) -> dict[str, str]:
         return {
