@@ -106,7 +106,7 @@ class Persona(BaseMocker):
             ]
         )
 
-    def _run(self, *args, **kwargs):
+    def _run(self, simulation_state: dict[str, Any], *args, **kwargs):
         agent_input = str(
             {
                 "args": args,
@@ -136,7 +136,7 @@ class Persona(BaseMocker):
         )
         return output
 
-    async def _arun(self, *args, **kwargs):
+    async def _arun(self, simulation_state: dict[str, Any], *args, **kwargs):
         agent_input = str(
             {
                 "args": args,

@@ -1,8 +1,8 @@
 from functools import cached_property
-from typing import ClassVar
+from typing import Any, ClassVar
 from uuid import uuid4
 
-from agents import Agent, Runner, SQLiteSession
+from agents import Agent, AgentOutputSchema, Runner, SQLiteSession
 
 from ..utils import no_trace
 from .base_mocker import BaseMocker
@@ -44,10 +44,12 @@ class MockTool(BaseMocker):
             name=self.name,
             instructions=self.prompt_template.format(description=self._func_doc, context=self.context or ""),
             model=self.model,
-            output_type=self.output_type,
+            output_type=AgentOutputSchema(self.output_type, strict_json_schema=False)
+            if self.output_type is not None
+            else None,
         )
 
-    def _run(self, *args, **kwargs):
+    def _run(self, simulation_state: dict[str, Any], *args, **kwargs):
         agent_input = str(
             {
                 "args": args,
@@ -63,7 +65,7 @@ class MockTool(BaseMocker):
         output = result.final_output
         return output
 
-    async def _arun(self, *args, **kwargs):
+    async def _arun(self, simulation_state: dict[str, Any], *args, **kwargs):
         agent_input = str(
             {
                 "args": args,

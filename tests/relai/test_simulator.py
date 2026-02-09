@@ -54,7 +54,7 @@ def test_simulated_decorator_sync_support() -> None:
         result = decorated_sync(10, 20)
 
     assert result == "mocked-value"
-    assert mocker.run_called_with == ((10, 20), {})
+    assert mocker.run_called_with == (({}, 10, 20), {})
     assert mocker.func_doc == "Combine two integers into a string."
     assert mocker.output_type is str
 
@@ -71,6 +71,12 @@ async def test_simulated_decorator_async_support() -> None:
         result = await decorated_async("prefix")
 
     assert result == "async-mocked"
-    assert mocker.arun_called_with == (("prefix",), {})
+    assert mocker.arun_called_with == (
+        (
+            {},
+            "prefix",
+        ),
+        {},
+    )
     assert mocker.func_doc == "Append '-async' to the provided prefix."
     assert mocker.output_type is str
