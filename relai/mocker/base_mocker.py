@@ -29,7 +29,7 @@ class BaseMocker(ABC):
         self._output_type = value
 
     @abstractmethod
-    def _run(self, *args: Any, **kwargs: Any) -> Any: ...
+    def _run(self, simulation_state: dict[str, Any], *args: Any, **kwargs: Any) -> Any: ...
 
-    async def _arun(self, *args: Any, **kwargs: Any) -> Any:
-        return self._run(*args, **kwargs)
+    async def _arun(self, simulation_state: dict[str, Any], *args: Any, **kwargs: Any) -> Any:
+        return self._run(simulation_state, *args, **kwargs)

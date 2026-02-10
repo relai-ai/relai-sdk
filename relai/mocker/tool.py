@@ -1,8 +1,9 @@
 from functools import cached_property
-from typing import ClassVar
+from typing import Any, ClassVar
 from uuid import uuid4
 
-from agents import Agent, Runner, SQLiteSession
+from agents import Agent, AgentOutputSchema, Runner, SQLiteSession
+from agents.extensions.models.litellm_model import LitellmModel
 
 from ..utils import no_trace
 from .base_mocker import BaseMocker
@@ -22,14 +23,17 @@ class MockTool(BaseMocker):
 
     def __init__(
         self,
-        model: str | None = "gpt-5-mini",
+        model: str | LitellmModel = "gpt-5-mini",
         context: str | None = None,
     ):
         """
         Initializes the MockTool with an optional model specification.
 
         Args:
-            model (str | None): The AI model to use for simulating the tool's behavior.
+            model (str | LitellmModel): The AI model to use for simulating the tool's behavior.
+                This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
+                (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
+                models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
             context (str | None): Additional context to guide behavior of the mock tool.
         """
         super().__init__()
@@ -44,10 +48,12 @@ class MockTool(BaseMocker):
             name=self.name,
             instructions=self.prompt_template.format(description=self._func_doc, context=self.context or ""),
             model=self.model,
-            output_type=self.output_type,
+            output_type=AgentOutputSchema(self.output_type, strict_json_schema=False)
+            if self.output_type is not None
+            else None,
         )
 
-    def _run(self, *args, **kwargs):
+    def _run(self, simulation_state: dict[str, Any], *args, **kwargs):
         agent_input = str(
             {
                 "args": args,
@@ -63,7 +69,7 @@ class MockTool(BaseMocker):
         output = result.final_output
         return output
 
-    async def _arun(self, *args, **kwargs):
+    async def _arun(self, simulation_state: dict[str, Any], *args, **kwargs):
         agent_input = str(
             {
                 "args": args,
@@ -81,6 +87,6 @@ class MockTool(BaseMocker):
 
     def serialize(self) -> dict[str, str]:
         return {
-            "model": self.model or "None",
+            "model": self.model if isinstance(self.model, str) else self.model.model,
             "context": self.context or "None",
         }

@@ -27,6 +27,7 @@ Samplable: TypeAlias = Sequence[BaseMocker]
 
 _simulation_mode: ContextVar[bool] = ContextVar("simulation_mode", default=False)
 _simulation_config: ContextVar[SimulationConfigT] = ContextVar("simulation_config", default={})
+_simulation_state: ContextVar[dict[str, Any]] = ContextVar("simulation_state", default=dict())
 _mocked_funcs: set[str] = set()
 
 
@@ -37,9 +38,32 @@ def _simulate(config: SimulationConfigT):
     """
     simulation_mode_token = _simulation_mode.set(True)
     simulation_config_token = _simulation_config.set(config or {})
+    simulation_state_token = _simulation_state.set(dict())
     yield
     _simulation_mode.reset(simulation_mode_token)
     _simulation_config.reset(simulation_config_token)
+    _simulation_state.reset(simulation_state_token)
+
+
+def get_current_simulation_state() -> dict[str, Any]:
+    """
+    Retrieves the current mocker context.
+
+    Returns:
+        dict[str, Any]: The current mocker context.
+    """
+    return _simulation_state.get()
+
+
+def set_simulation_state_field(field: str, value: Any) -> None:
+    """
+    Sets a specific field in the current simulation state.
+
+    Args:
+        field (str): The field name to set.
+        value (Any): The value to assign to the field.
+    """
+    _simulation_state.get()[field] = value
 
 
 def get_current_simulation_mode() -> bool:
@@ -95,7 +119,8 @@ def simulated(
                 mocker.func_doc = func_doc
             if mocker.output_type is None:
                 mocker.output_type = output_type
-            return mocker._run(*args, **kwargs)
+            simulation_state = get_current_simulation_state()
+            return mocker._run(simulation_state, *args, **kwargs)
 
     @functools.wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -112,7 +137,8 @@ def simulated(
                 mocker.func_doc = func_doc
             if mocker.output_type is None:
                 mocker.output_type = output_type
-            return await mocker._arun(*args, **kwargs)
+            simulation_state = get_current_simulation_state()
+            return await mocker._arun(simulation_state, *args, **kwargs)
 
     if inspect.iscoroutinefunction(func):
         return async_wrapper
