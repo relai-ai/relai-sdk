@@ -4,6 +4,7 @@ from typing import Any, ClassVar
 from uuid import uuid4
 
 from agents import Agent, AgentOutputSchema, Runner, SQLiteSession
+from agents.extensions.models.litellm_model import LitellmModel
 from jsonschema import ValidationError as JsonSchemaValidationError
 from jsonschema import validate as validate_json_schema
 from pydantic import BaseModel
@@ -41,7 +42,7 @@ class StatefulMocker(BaseMocker):
     def __init__(
         self,
         state_fields: list[str],
-        model: str | None = "gpt-5-mini",
+        model: str | LitellmModel = "gpt-5-mini",
         context: str | None = None,
         state_model: type[BaseModel] | None = None,
         state_schema: dict[str, Any] | None = None,
@@ -55,7 +56,10 @@ class StatefulMocker(BaseMocker):
 
         Args:
             state_fields (list[str]): The simulation_state fields to condition on and update.
-            model (str | None): The AI model to use for simulating tool behavior and updates.
+            model (str | LitellmModel): The AI model to use for simulating tool behavior and updates.
+                This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
+                (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
+                models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
             context (str | None): Additional context to guide behavior of the mocker.
             state_model (type[BaseModel] | None): Optional Pydantic model for state snapshot validation.
             state_schema (dict[str, Any] | None): Optional JSON schema for state snapshot validation.
@@ -251,8 +255,7 @@ class StatefulMocker(BaseMocker):
         state_snapshot = self._snapshot_state(simulation_state)
 
         validation_errors: list[str] = []
-        attempts = self.max_validation_retries + 1
-        for _ in range(attempts):
+        for _ in range(self.max_validation_retries + 1):
             update_input = str(
                 {
                     "args": args,
@@ -278,7 +281,9 @@ class StatefulMocker(BaseMocker):
                 return output
             validation_errors = [error]
 
-        raise ValueError(f"State update validation failed after {attempts} attempts: {validation_errors[-1]}")
+        raise ValueError(
+            f"State update validation failed after {self.max_validation_retries + 1} attempts: {validation_errors[-1]}"
+        )
 
     async def _arun(self, simulation_state: dict[str, Any], *args: Any, **kwargs: Any) -> Any:
         output = await self._arun_with_validation(simulation_state, *args, **kwargs)
@@ -287,8 +292,7 @@ class StatefulMocker(BaseMocker):
         state_snapshot = self._snapshot_state(simulation_state)
 
         validation_errors: list[str] = []
-        attempts = self.max_validation_retries + 1
-        for _ in range(attempts):
+        for _ in range(self.max_validation_retries + 1):
             update_input = str(
                 {
                     "args": args,
@@ -314,11 +318,13 @@ class StatefulMocker(BaseMocker):
                 return output
             validation_errors = [error]
 
-        raise ValueError(f"State update validation failed after {attempts} attempts: {validation_errors[-1]}")
+        raise ValueError(
+            f"State update validation failed after {self.max_validation_retries + 1} attempts: {validation_errors[-1]}"
+        )
 
     def serialize(self) -> dict[str, str]:
         return {
-            "model": self.model or "None",
+            "model": self.model if isinstance(self.model, str) else self.model.model,
             "context": self.context or "None",
             "state_fields": ", ".join(self.state_fields),
             "state_model": self.state_model.__name__ if self.state_model is not None else "None",

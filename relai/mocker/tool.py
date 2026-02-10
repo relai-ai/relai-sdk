@@ -3,6 +3,7 @@ from typing import Any, ClassVar
 from uuid import uuid4
 
 from agents import Agent, AgentOutputSchema, Runner, SQLiteSession
+from agents.extensions.models.litellm_model import LitellmModel
 
 from ..utils import no_trace
 from .base_mocker import BaseMocker
@@ -22,14 +23,17 @@ class MockTool(BaseMocker):
 
     def __init__(
         self,
-        model: str | None = "gpt-5-mini",
+        model: str | LitellmModel = "gpt-5-mini",
         context: str | None = None,
     ):
         """
         Initializes the MockTool with an optional model specification.
 
         Args:
-            model (str | None): The AI model to use for simulating the tool's behavior.
+            model (str | LitellmModel): The AI model to use for simulating the tool's behavior.
+                This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
+                (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
+                models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
             context (str | None): Additional context to guide behavior of the mock tool.
         """
         super().__init__()
@@ -83,6 +87,6 @@ class MockTool(BaseMocker):
 
     def serialize(self) -> dict[str, str]:
         return {
-            "model": self.model or "None",
+            "model": self.model if isinstance(self.model, str) else self.model.model,
             "context": self.context or "None",
         }
