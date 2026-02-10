@@ -7,7 +7,7 @@
   <a href="https://pypi.org/project/relai/"><img alt="PyPI" src="https://img.shields.io/pypi/v/relai.svg"></a>
   <img alt="Python" src="https://img.shields.io/pypi/pyversions/relai.svg">
   <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <a href="http://docs-relai.ai"><img alt="Docs" src="https://img.shields.io/badge/docs-online-brightgreen.svg"></a>
+  <a href="http://docs-sdk.relai.ai"><img alt="Docs" src="https://img.shields.io/badge/docs-online-brightgreen.svg"></a>
   <a href="https://github.com/relai-ai/relai-sdk/actions/workflows/upload-to-package-index.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/relai-ai/relai-sdk/upload-to-package-index.yml?branch=main"></a>
 </p>
 
