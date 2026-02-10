@@ -7,7 +7,7 @@
   <a href="https://pypi.org/project/relai/"><img alt="PyPI" src="https://img.shields.io/pypi/v/relai.svg"></a>
   <img alt="Python" src="https://img.shields.io/pypi/pyversions/relai.svg">
   <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <a href="http://docs.relai.ai"><img alt="Docs" src="https://img.shields.io/badge/docs-online-brightgreen.svg"></a>
+  <a href="http://docs-sdk.relai.ai"><img alt="Docs" src="https://img.shields.io/badge/docs-online-brightgreen.svg"></a>
   <a href="https://github.com/relai-ai/relai-sdk/actions/workflows/upload-to-package-index.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/relai-ai/relai-sdk/upload-to-package-index.yml?branch=main"></a>
 </p>
 
@@ -180,24 +180,24 @@ if __name__ == "__main__":
 ## Simulation
 Create controlled environments where agents interact and generate traces. Compose LLM personas, mock MCP tools/servers, and synthetic data; optionally condition on real events to align simulation ⇄ production.
 
-➡️ Learn more: [Simulator](https://docs.relai.ai/api/simulator.html)
+➡️ Learn more: [Simulator](https://docs-sdk.relai.ai/api/simulator.html)
 
 ## Evaluation (Critico)
 Use code-based or LLM-based evaluators—or RELAI platform evaluators—and convert human reviews into benchmarks you can re-run in Simuation/CI pipeline.
 
-➡️ Learn more: [Evaluator](https://docs.relai.ai/api/evaluator.html)
+➡️ Learn more: [Evaluator](https://docs-sdk.relai.ai/api/evaluator.html)
 
 ## Optimization (Maestro)
 Maestro is a holistic agent optimizer. It consumes evaluator/user feedback to improve prompts, configs, and even graph structure when prompt tuning isn’t enough. It can also select the best model, best tool, and best graph based on observed performance.
 
-➡️ Learn more: [Maestro](https://docs.relai.ai/api/maestro.html)
+➡️ Learn more: [Maestro](https://docs-sdk.relai.ai/api/maestro.html)
 
 ## Links
 
-- 📘 **Documentation:** [docs.relai.ai](http://docs.relai.ai)
+- 📘 **Documentation:** [docs-sdk.relai.ai](https://docs-sdk.relai.ai)
 - 🧪 **Examples:** [relai-sdk/examples](examples)
 - 📓 **Notebooks:** [relai-sdk/notebooks](notebooks)
-- 📖 **Tutorials:** [docs.relai.ai/tutorials/index.html](https://docs.relai.ai/tutorials/index.html)
+- 📖 **Tutorials:** [docs-sdk.relai.ai/tutorials/index.html](https://docs-sdk.relai.ai/tutorials/index.html)
 - 🌐 **Website:** [relai.ai](https://relai.ai)
 - 📰 **Maestro Technical Report:** [ArXiV](https://arxiv.org/abs/2509.04642)
 - 🌐 **Join the Community:** [Discord](https://discord.gg/sjaHJ34YYE)

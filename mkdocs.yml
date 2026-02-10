@@ -4,6 +4,7 @@ use_directory_urls: false
 
 theme:
   name: material
+  favicon: 'relaifavicon.svg'
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -47,7 +48,6 @@ theme:
   #   text: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
   #   code: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace
   logo: false
-  favicon: false
   # custom_dir: docs_overrides
 
 plugins:
