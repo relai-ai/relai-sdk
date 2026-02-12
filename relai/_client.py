@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import aiohttp
 import httpx
@@ -342,6 +342,7 @@ class RELAI(BaseRELAI):
         serialized_simulation_config: dict[str, Any] | None = None,
         agent_version_uuid: str | None = None,
         environment_uuid: str | None = None,
+        status: Literal["SUCCESS", "FAILURE"] = "SUCCESS",
     ) -> None:
         agent_inputs = agent_inputs or {}
         agent_outputs = agent_outputs or {}
@@ -358,6 +359,7 @@ class RELAI(BaseRELAI):
                 "serialized_simulation_config": serialized_simulation_config,
                 "agent_version_uuid": agent_version_uuid,
                 "environment_uuid": environment_uuid,
+                "status": status,
             },
         )
 
@@ -790,6 +792,7 @@ class AsyncRELAI(BaseRELAI):
         serialized_simulation_config: dict[str, Any] | None = None,
         agent_version_uuid: str | None = None,
         environment_uuid: str | None = None,
+        status: Literal["SUCCESS", "FAILURE"] = "SUCCESS",
     ) -> None:
         agent_inputs = agent_inputs or {}
         agent_outputs = agent_outputs or {}
@@ -806,6 +809,7 @@ class AsyncRELAI(BaseRELAI):
                 "serialized_simulation_config": serialized_simulation_config,
                 "agent_version_uuid": agent_version_uuid,
                 "environment_uuid": environment_uuid,
+                "status": status,
             },
         )
 

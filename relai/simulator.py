@@ -256,10 +256,13 @@ class SyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = self.agent_fn(tape)
+                        status = "SUCCESS"
                     except Exception:
                         agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
+                        status = "FAILURE"
                 else:
                     agent_outputs = self.agent_fn(tape)
+                    status = "SUCCESS"
 
                 if not isinstance(agent_outputs, dict):
                     raise TypeError("agent_fn must return an instance of AgentOutputs")
@@ -278,6 +281,7 @@ class SyncSimulator(BaseSimulator):
                         },
                         agent_version_uuid=agent_version_uuid,
                         environment_uuid=environment_uuid,
+                        status=status,
                     )
                 agent_logs.append(agent_log)
                 tape.add_record("relai_log", get_current_logger().serialize())
@@ -313,10 +317,13 @@ class SyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = self.agent_fn(new_tape)
+                        status = "SUCCESS"
                     except Exception:
                         agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
+                        status = "FAILURE"
                 else:
                     agent_outputs = self.agent_fn(new_tape)
+                    status = "SUCCESS"
 
                 agent_log = AgentLog(simulation_tape=new_tape, agent_outputs=agent_outputs)
                 agent_logs.append(agent_log)
@@ -335,6 +342,7 @@ class SyncSimulator(BaseSimulator):
                         },
                         agent_version_uuid=agent_version_uuid,
                         environment_uuid=environment_uuid,
+                        status=status,
                     )
                 new_tape.add_record("relai_log", get_current_logger().serialize())
         tracking_off()
@@ -395,10 +403,13 @@ class AsyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = await self.agent_fn(tape)
+                        status = "SUCCESS"
                     except Exception:
                         agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
+                        status = "FAILURE"
                 else:
                     agent_outputs = await self.agent_fn(tape)
+                    status = "SUCCESS"
 
                 agent_log = AgentLog(simulation_tape=tape, agent_outputs=agent_outputs)
                 if self.log_runs and self.client is not None:
@@ -415,6 +426,7 @@ class AsyncSimulator(BaseSimulator):
                         },
                         agent_version_uuid=agent_version_uuid,
                         environment_uuid=environment_uuid,
+                        status=status,
                     )
                 agent_logs.append(agent_log)
                 tape.add_record("relai_log", get_current_logger().serialize())
@@ -450,10 +462,13 @@ class AsyncSimulator(BaseSimulator):
                 if catch_exception:
                     try:
                         agent_outputs = await self.agent_fn(new_tape)
+                        status = "SUCCESS"
                     except Exception:
                         agent_outputs = {"[Exception]": traceback.format_exc(limit=3)}
+                        status = "FAILURE"
                 else:
                     agent_outputs = await self.agent_fn(new_tape)
+                    status = "SUCCESS"
 
                 agent_log = AgentLog(simulation_tape=new_tape, agent_outputs=agent_outputs)
                 agent_logs.append(agent_log)
@@ -472,6 +487,7 @@ class AsyncSimulator(BaseSimulator):
                         },
                         agent_version_uuid=agent_version_uuid,
                         environment_uuid=environment_uuid,
+                        status=status,
                     )
                 new_tape.add_record("relai_log", get_current_logger().serialize())
         tracking_off()
