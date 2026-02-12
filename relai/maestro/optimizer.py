@@ -619,7 +619,7 @@ class Maestro:
                             },
                             validation_score=config["average_score"],
                             validation_count=config["validation_count"],
-                            validation_runs=config["validation_runs"],
+                            validation_runs=[],  # currently not in use; upload a placeholder to reduce payload size
                             utc_timestamp=config["utc_timestamp"],
                         )
                         for config in self.versions
@@ -860,17 +860,7 @@ class Maestro:
             payload = GraphOptVizSchema(
                 name=self.name,
                 proposal=suggestion_to_upload,
-                runs=[
-                    RunSchema(
-                        log=test_case["log"],
-                        trace_id=test_case["trace_id"],
-                        input=test_case["input"],
-                        output=test_case["output"],
-                        eval_score=test_case["eval_score"],
-                        eval_feedback=test_case["eval_feedback"],
-                    )
-                    for test_case in selected_test_cases
-                ],
+                runs=[],  # currently not in use; upload a placeholder to reduce payload size
             )
 
             return await self._client.update_graph_opt_visual(payload)
