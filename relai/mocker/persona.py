@@ -1,10 +1,10 @@
 import asyncio
 from collections.abc import Callable, Sequence
 from functools import cached_property
-from typing import Any, ClassVar, cast, overload
+from typing import Any, ClassVar, Literal, cast, overload
 from uuid import uuid4
 
-from agents import Agent, Runner, SQLiteSession, Tool, function_tool
+from agents import Agent, ModelSettings, Runner, SQLiteSession, Tool, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
 
 from .._client import get_default_client
@@ -50,6 +50,8 @@ class Persona(BaseMocker):
         identifier_in_trajectory: str = "user",
         tools: list[Callable[..., Any]] | None = None,
         model: str | LitellmModel = "gpt-5-mini",
+        reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None = None,
+        extra_model_args: dict[str, Any] | None = None,
     ):
         """
         Initializes the Persona with a description, intent, optional starting message, tools, and model.
@@ -68,6 +70,10 @@ class Persona(BaseMocker):
                 This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
                 (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
                 models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
+            reasoning_effort (Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None): The
+                level of reasoning effort to use for the LLM, if supported by the provider.
+            extra_model_args (dict[str, Any] | None): Arbitrary keyword arguments to pass directly to the underlying
+                model's API. Note that not all models support all parameters.
         """
         super().__init__()
         self.name = f"persona-{uuid4().hex}"
@@ -81,6 +87,8 @@ class Persona(BaseMocker):
         self.model = model
         self._session = SQLiteSession(self.name)
         self._start = True
+        self.reasoning_effort = reasoning_effort
+        self.extra_model_args = extra_model_args
 
     @cached_property
     def agent(self) -> Agent:
@@ -90,12 +98,17 @@ class Persona(BaseMocker):
                 identifier_in_trajectory=self.identifier_in_trajectory, trajectory=self.trajectory
             )
 
+        extra_args = dict(self.extra_model_args or {})
+        if self.reasoning_effort is not None:
+            extra_args["reasoning_effort"] = self.reasoning_effort
+
         return Agent(
             name=self.name,
             tools=self.tools,
             instructions=instructions,
             model=self.model,
             output_type=self.output_type,
+            model_settings=ModelSettings(extra_args=extra_args),
         )
 
     async def _add_starting_message(self, agent_input: str) -> None:

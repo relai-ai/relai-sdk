@@ -1,8 +1,8 @@
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 from uuid import uuid4
 
-from agents import Agent, AgentOutputSchema, Runner, SQLiteSession
+from agents import Agent, AgentOutputSchema, ModelSettings, Runner, SQLiteSession
 from agents.extensions.models.litellm_model import LitellmModel
 
 from ..utils import no_trace
@@ -24,6 +24,8 @@ class MockTool(BaseMocker):
     def __init__(
         self,
         model: str | LitellmModel = "gpt-5-mini",
+        reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None = None,
+        extra_model_args: dict[str, Any] | None = None,
         context: str | None = None,
     ):
         """
@@ -34,6 +36,10 @@ class MockTool(BaseMocker):
                 This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
                 (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
                 models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
+            reasoning_effort (Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None): The
+                level of reasoning effort to use for the LLM, if supported by the provider.
+            extra_model_args (dict[str, Any] | None): Arbitrary keyword arguments to pass directly to the underlying
+                model's API. Note that not all models support all parameters.
             context (str | None): Additional context to guide behavior of the mock tool.
         """
         super().__init__()
@@ -41,13 +47,20 @@ class MockTool(BaseMocker):
         self.model = model
         self.context = context
         self._session = SQLiteSession(self.name)
+        self.reasoning_effort = reasoning_effort
+        self.extra_model_args = extra_model_args
 
     @cached_property
     def agent(self) -> Agent:
+        extra_args = dict(self.extra_model_args or {})
+        if self.reasoning_effort is not None:
+            extra_args["reasoning_effort"] = self.reasoning_effort
+
         return Agent(
             name=self.name,
             instructions=self.prompt_template.format(description=self._func_doc, context=self.context or ""),
             model=self.model,
+            model_settings=ModelSettings(extra_args=extra_args),
             output_type=AgentOutputSchema(self.output_type, strict_json_schema=False)
             if self.output_type is not None
             else None,
