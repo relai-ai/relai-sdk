@@ -6,7 +6,7 @@ from functools import cached_property
 from itertools import chain
 from typing import Any, Callable, ClassVar, Literal, Optional
 
-from agents import Agent, Runner
+from agents import Agent, ModelSettings, Runner
 from agents.extensions.models.litellm_model import LitellmModel
 from pydantic import BaseModel, create_model
 
@@ -696,18 +696,22 @@ class RELAICustomEvaluator(Evaluator):
     def __init__(
         self,
         evaluator_id: str,
-        model_name: str = "gpt-5-mini",
-        model: LitellmModel | None = None,
+        model: str | LitellmModel = "gpt-5-mini",
+        reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None = None,
+        extra_model_args: dict[str, Any] | None = None,
         transform: Optional[Callable] = None,
     ):
         """
         Args:
             evaluator_id (str): The unique identifier of the custom evaluator defined on the RELAI platform.
-            model_name (str, optional): The name of the model to use for the evaluator. Defaults to "gpt-5-mini".
-            model (LitellmModel | None, optional): An optional LitellmModel
-                (from agents.extensions.models.litellm_model import LitellmModel) instance to use for the evaluator.
-                If provided, it overrides the `model_name`. For a full list of models supported in LiteLLM,
-                see https://docs.litellm.ai/docs/providers. Defaults to None.
+            model (str | LitellmModel): The AI model to use for simulating the persona's behavior.
+                This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
+                (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
+                models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
+            reasoning_effort (Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None): The
+                level of reasoning effort to use for the LLM, if supported by the provider.
+            extra_model_args (dict[str, Any] | None): Arbitrary keyword arguments to pass directly to the underlying
+                model's API. Note that not all models support all parameters.
             transform (Callable): An optional callable to transform (pre-process) the `agent_outputs` of the agent
                 response for the evaluator. Defaults to None.
         """
@@ -718,11 +722,19 @@ class RELAICustomEvaluator(Evaluator):
         output_fields = evaluator_details["parameters"]["output_format"]
         super().__init__(name=evaluator_details["name"], required_fields=input_fields, transform=transform)
         self.evaluator_id = evaluator_id
+        self.reasoning_effort = reasoning_effort
+        self.extra_model_args = extra_model_args
+
+        extra_args = dict(self.extra_model_args or {})
+        if self.reasoning_effort is not None:
+            extra_args["reasoning_effort"] = self.reasoning_effort
+
         self._agent = Agent(
             name=self.name,
-            model=model_name if model is None else model,
+            model=model,
             instructions=self.prompt_template.format(instructions=evaluator_prompt, output_fields=output_fields),
             output_type=RELAICustomEvaluator.create_output_model(output_fields),
+            model_settings=ModelSettings(extra_args=extra_args),
         )
 
     @classmethod

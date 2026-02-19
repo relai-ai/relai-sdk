@@ -1,9 +1,9 @@
 import json
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 from uuid import uuid4
 
-from agents import Agent, AgentOutputSchema, Runner, SQLiteSession
+from agents import Agent, AgentOutputSchema, ModelSettings, Runner, SQLiteSession
 from agents.extensions.models.litellm_model import LitellmModel
 from jsonschema import ValidationError as JsonSchemaValidationError
 from jsonschema import validate as validate_json_schema
@@ -43,6 +43,8 @@ class StatefulMocker(BaseMocker):
         self,
         state_fields: list[str],
         model: str | LitellmModel = "gpt-5-mini",
+        reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None = None,
+        extra_model_args: dict[str, Any] | None = None,
         context: str | None = None,
         state_model: type[BaseModel] | None = None,
         state_schema: dict[str, Any] | None = None,
@@ -60,6 +62,10 @@ class StatefulMocker(BaseMocker):
                 This can be a string identifier for OpenAI models (e.g. gpt-5-mini) or a LitellmModel
                 (from agents.extensions.models.litellm_model import LitellmModel). For a full list of
                 models supported in LiteLLM, see https://docs.litellm.ai/docs/providers
+            reasoning_effort (Literal["none", "minimal", "low", "medium", "high", "xhigh", "default"] | None): The
+                level of reasoning effort to use for the LLM, if supported by the provider.
+            extra_model_args (dict[str, Any] | None): Arbitrary keyword arguments to pass directly to the underlying
+                model's API. Note that not all models support all parameters.
             context (str | None): Additional context to guide behavior of the mocker.
             state_model (type[BaseModel] | None): Optional Pydantic model for state snapshot validation.
             state_schema (dict[str, Any] | None): Optional JSON schema for state snapshot validation.
@@ -87,6 +93,8 @@ class StatefulMocker(BaseMocker):
         self.read_only_state = read_only_state
         self._session = SQLiteSession(self.name)
         self._update_session = SQLiteSession(f"{self.name}-updates")
+        self.reasoning_effort = reasoning_effort
+        self.extra_model_args = extra_model_args
 
     @cached_property
     def agent(self) -> Agent:
@@ -95,6 +103,11 @@ class StatefulMocker(BaseMocker):
             output_type = AgentOutputSchema(self.output_model, strict_json_schema=False)
         elif self.output_type is not None:
             output_type = AgentOutputSchema(self.output_type, strict_json_schema=False)
+
+        extra_args = dict(self.extra_model_args or {})
+        if self.reasoning_effort is not None:
+            extra_args["reasoning_effort"] = self.reasoning_effort
+
         return Agent(
             name=self.name,
             instructions=self.prompt_template.format(
@@ -104,10 +117,15 @@ class StatefulMocker(BaseMocker):
             ),
             model=self.model,
             output_type=output_type,
+            model_settings=ModelSettings(extra_args=extra_args),
         )
 
     @cached_property
     def update_agent(self) -> Agent:
+        extra_args = dict(self.extra_model_args or {})
+        if self.reasoning_effort is not None:
+            extra_args["reasoning_effort"] = self.reasoning_effort
+
         return Agent(
             name=f"{self.name}-updates",
             instructions=self.update_prompt_template.format(
@@ -116,6 +134,7 @@ class StatefulMocker(BaseMocker):
                 state_fields=", ".join(self.state_fields),
             ),
             model=self.model,
+            model_settings=ModelSettings(extra_args=extra_args),
         )
 
     def _snapshot_state(self, simulation_state: dict[str, Any]) -> dict[str, Any]:
