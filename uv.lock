@@ -1491,7 +1491,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.80.0"
+version = "1.81.15"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1507,9 +1507,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/8c/48d533affdbc6d485b7ad4221cd3b40b8c12f9f5568edfe0be0b11e7b945/litellm-1.80.0.tar.gz", hash = "sha256:eeac733eb6b226f9e5fb020f72fe13a32b3354b001dc62bcf1bc4d9b526d6231", size = 11591976 }
+sdist = { url = "https://files.pythonhosted.org/packages/70/0c/62a0fdc5adae6d205338f9239175aa6a93818e58b75cf000a9c7214a3d9f/litellm-1.81.15.tar.gz", hash = "sha256:a8a6277a53280762051c5818ebc76dd5f036368b9426c6f21795ae7f1ac6ebdc", size = 16597039 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ea/53/aa31e4d057b3746b3c323ca993003d6cf15ef987e7fe7ceb53681695ae87/litellm-1.80.0-py3-none-any.whl", hash = "sha256:fd0009758f4772257048d74bf79bb64318859adb4ea49a8b66fdbc718cd80b6e", size = 10492975 },
+    { url = "https://files.pythonhosted.org/packages/78/fd/da11826dda0d332e360b9ead6c0c992d612ecb85b00df494823843cfcda3/litellm-1.81.15-py3-none-any.whl", hash = "sha256:2fa253658702509ce09fe0e172e5a47baaadf697fb0f784c7fd4ff665ae76ae1", size = 14682123 },
 ]
 
 [[package]]
@@ -2049,7 +2049,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.102.0"
+version = "2.24.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -2061,14 +2061,14 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/07/55/da5598ed5c6bdd9939633854049cddc5cbac0da938dfcfcb3c6b119c16c0/openai-1.102.0.tar.gz", hash = "sha256:2e0153bcd64a6523071e90211cbfca1f2bbc5ceedd0993ba932a5869f93b7fc9", size = 519027 }
+sdist = { url = "https://files.pythonhosted.org/packages/55/13/17e87641b89b74552ed408a92b231283786523edddc95f3545809fab673c/openai-2.24.0.tar.gz", hash = "sha256:1e5769f540dbd01cb33bc4716a23e67b9d695161a734aff9c5f925e2bf99a673", size = 658717 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bd/0d/c9e7016d82c53c5b5e23e2bad36daebb8921ed44f69c0a985c6529a35106/openai-1.102.0-py3-none-any.whl", hash = "sha256:d751a7e95e222b5325306362ad02a7aa96e1fab3ed05b5888ce1c7ca63451345", size = 812015 },
+    { url = "https://files.pythonhosted.org/packages/c9/30/844dc675ee6902579b8eef01ed23917cc9319a1c9c0c14ec6e39340c96d0/openai-2.24.0-py3-none-any.whl", hash = "sha256:fed30480d7d6c884303287bde864980a4b137b60553ffbcf9ab4a233b7a73d94", size = 1120122 },
 ]
 
 [[package]]
 name = "openai-agents"
-version = "0.2.10"
+version = "0.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "griffe" },
@@ -2079,9 +2079,9 @@ dependencies = [
     { name = "types-requests" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/8e/99a7ad15bdd48610d2e738aecdcba9bdcca7b60b4a4f8006577e76f651b6/openai_agents-0.2.10.tar.gz", hash = "sha256:8741890b5b5f1513589aebc571776b9a17158a01f6df55ab6402668d2a204a4d", size = 1671208 }
+sdist = { url = "https://files.pythonhosted.org/packages/15/2c/a58fefef46bba20f5d8760509aebbe2a581d6ceb11f2ec56345e52b1d85d/openai_agents-0.10.1.tar.gz", hash = "sha256:41c5ae9f1f6e5c23826745ff99dc59a313929d9ddf8f451ac20d7d5dd47627ea", size = 2425265 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/1d/95930498ea971834f808242fb00a5574796c29adf93afb8444a6ec970a73/openai_agents-0.2.10-py3-none-any.whl", hash = "sha256:70618881d190265beefb5dac5ffd7bb99e2bed5907440e468ce03257d8994bf5", size = 178904 },
+    { url = "https://files.pythonhosted.org/packages/d0/7c/69e94f7580c6fb999c26bec9a680e94e76db66460438c8ece0b09b898d1b/openai_agents-0.10.1-py3-none-any.whl", hash = "sha256:12b3295d7b240533060032e625bef472a07761f5eef732412e30bd82f4c14945", size = 400624 },
 ]
 
 [package.optional-dependencies]
@@ -3095,7 +3095,7 @@ wheels = [
 
 [[package]]
 name = "relai"
-version = "0.3.25"
+version = "0.3.26"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp", extra = ["speedups"] },
@@ -3118,7 +3118,7 @@ dev = [
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
     { name = "openai" },
-    { name = "openai-agents" },
+    { name = "openai-agents", extra = ["litellm"] },
     { name = "openinference-instrumentation-openai-agents" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -3133,7 +3133,7 @@ requires-dist = [
     { name = "aiohttp", extras = ["speedups"], specifier = ">=3.12.15" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "numpy", specifier = ">=1.26.4" },
-    { name = "openai-agents", extras = ["litellm"], specifier = ">=0.2.10" },
+    { name = "openai-agents", extras = ["litellm"], specifier = ">=0.6.2" },
     { name = "openinference-instrumentation", specifier = ">=0.1.38" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.58b0" },
     { name = "pydantic", specifier = ">=2.11.5" },
@@ -3148,8 +3148,8 @@ dev = [
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "mkdocs-material", specifier = ">=9.6.14" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.29.1" },
-    { name = "openai", specifier = "==1.102.0" },
-    { name = "openai-agents", specifier = ">=0.2.10" },
+    { name = "openai", specifier = ">=1.102.0" },
+    { name = "openai-agents", extras = ["litellm"], specifier = ">=0.6.2" },
     { name = "openinference-instrumentation-openai-agents", specifier = ">=1.3.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", specifier = ">=1.1.0" },
