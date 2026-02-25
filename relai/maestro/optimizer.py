@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Optional
 from uuid import uuid4
 
+from agents.apply_diff import apply_diff
 from tqdm.auto import tqdm
 
 from relai import AsyncRELAI
@@ -17,7 +18,6 @@ from ..schema.visual import ConfigOptVizSchema, ConfigSchema, GraphOptVizSchema,
 from .graph import get_current_param_graph
 from .params import get_current_params
 from .utils import ProportionalSampler, extract_code, get_full_func_name
-from agents.apply_diff import apply_diff
 
 
 class Maestro:
@@ -807,7 +807,6 @@ class Maestro:
             }
         )
 
-
         if (code is not None) and (code_verifier is not None):
             print("Code verifier provided. Generating code...\n\n")
             suggested_code = ""
@@ -834,7 +833,7 @@ class Maestro:
                 except Exception as e:
                     verified = False
                     issues = f"Error applying suggested patch: {e}"
-                
+
                 if not verified:
                     print(
                         (
