@@ -17,6 +17,7 @@ from ..schema.visual import ConfigOptVizSchema, ConfigSchema, GraphOptVizSchema,
 from .graph import get_current_param_graph
 from .params import get_current_params
 from .utils import ProportionalSampler, extract_code, get_full_func_name
+from agents.apply_diff import apply_diff
 
 
 class Maestro:
@@ -806,26 +807,34 @@ class Maestro:
             }
         )
 
+
         if (code is not None) and (code_verifier is not None):
             print("Code verifier provided. Generating code...\n\n")
             suggested_code = ""
+            suggested_patch = ""
             verified = False
             issues = None
             correction_round = 0
             max_correction_rounds = 3
 
             while not verified and correction_round < max_correction_rounds:
-                suggested_code = await self._client.apply_structure_to_code(
+                suggested_patch = await self._client.apply_structure_to_code(
                     {
                         "agent_name": get_full_func_name(self.agent_fn),
                         "agent_code": code,
                         "suggested_structure": suggestion,
-                        "previous_suggested_code": suggested_code,
+                        "previous_suggested_code": suggested_patch,
                         "issues": issues,
                         "code_context": code_context,
                     }
                 )
-                verified, issues = code_verifier(suggested_code)
+                try:
+                    suggested_code = apply_diff(code, suggested_patch)
+                    verified, issues = code_verifier(suggested_code)
+                except Exception as e:
+                    verified = False
+                    issues = f"Error applying suggested patch: {e}"
+                
                 if not verified:
                     print(
                         (
@@ -840,7 +849,7 @@ class Maestro:
                 suggestion_to_upload = (
                     f"[Code verified successfully]\n"
                     f"<proposal>\n{suggestion}\n</proposal>\n\n"
-                    f"<suggested_code>\n{suggested_code}\n</suggested_code>\n\n"
+                    f"<suggested_patch>\n{suggested_patch}\n</suggested_patch>\n\n"
                     f"<issues>\n{issues}\n</issues>\n\n"
                 )
                 suggestion = suggested_code
@@ -849,7 +858,7 @@ class Maestro:
                 suggestion_to_upload = (
                     f"[Code verification failed]\n"
                     f"<proposal>\n{suggestion}\n</proposal>\n\n"
-                    f"<suggested_code>\n{suggested_code}\n</suggested_code>\n\n"
+                    f"<suggested_patch>\n{suggested_patch}\n</suggested_patch>\n\n"
                     f"<issues>\n{issues}\n</issues>\n\n"
                 )
                 suggestion = suggestion_to_upload
