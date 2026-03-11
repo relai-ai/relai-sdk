@@ -180,18 +180,21 @@ class StatefulMocker(BaseMocker):
             return raw_output
         text = str(raw_output).strip()
         if not text:
-            return "Decoding failed: output is empty."
+            raise ValueError("Decoding failed: output is empty.")
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            start = text.find("{")
-            end = text.rfind("}")
-            if start == -1 or end == -1 or end <= start:
-                return "Decoding failed; no JSON object found."
             try:
-                return ast.literal_eval(text[start : end + 1])
+                return ast.literal_eval(text)
             except:
-                return "Decoding failed: invalid JSON."
+                start = text.find("{")
+                end = text.rfind("}")
+                if start == -1 or end == -1 or end <= start:
+                    raise ValueError("Decoding failed; no JSON object found.")
+                try:
+                    return ast.literal_eval(text[start : end + 1])
+                except:
+                    raise ValueError("Decoding failed: invalid JSON.")
 
     def _apply_state_updates(self, simulation_state: dict[str, Any], updates: dict[str, Any]) -> None:
         for field in self.state_fields:
@@ -239,11 +242,15 @@ class StatefulMocker(BaseMocker):
             if self.output_schema is None:
                 output = result.final_output
             else:
-                output = self._parse(result.final_output)
+                try:
+                    output = self._parse(result.final_output)
+                except ValueError as exc:
+                    validation_errors.append(str(exc))
+                    continue
             error = self._validate_output(output)
             if error is None:
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(f"Output validation failed after {attempts} attempts: {validation_errors[-1]}")
 
@@ -271,11 +278,15 @@ class StatefulMocker(BaseMocker):
             if self.output_schema is None:
                 output = result.final_output
             else:
-                output = self._parse(result.final_output)
+                try:
+                    output = self._parse(result.final_output)
+                except ValueError as exc:
+                    validation_errors.append(str(exc))
+                    continue
             error = self._validate_output(output)
             if error is None:
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(f"Output validation failed after {attempts} attempts: {validation_errors[-1]}")
 
@@ -302,19 +313,19 @@ class StatefulMocker(BaseMocker):
                     update_input,
                     session=self._update_session,
                 )
-            if self.state_schema is None:
-                updates = update_result.final_output
-            else:
-                # manual parsing only if we have a state schema
+            try:
                 updates = self._parse(update_result.final_output)
+            except ValueError as exc:
+                validation_errors.append(str(exc))
+                continue
             if not isinstance(updates, dict):
-                validation_errors = ["Update parsing failed: expected a JSON object."]
+                validation_errors.append("Update parsing failed: expected a JSON object.")
                 continue
             error = self._validate_updated_snapshot(state_snapshot, updates)
             if error is None:
                 self._apply_state_updates(simulation_state, updates)
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(
             f"State update validation failed after {self.max_validation_retries + 1} attempts: {validation_errors[-1]}"
@@ -343,19 +354,19 @@ class StatefulMocker(BaseMocker):
                     update_input,
                     session=self._update_session,
                 )
-            if self.state_schema is None:
-                updates = update_result.final_output
-            else:
-                # manual parsing only if we have a state schema
+            try:
                 updates = self._parse(update_result.final_output)
+            except ValueError as exc:
+                validation_errors.append(str(exc))
+                continue
             if not isinstance(updates, dict):
-                validation_errors = ["Update parsing failed: expected a JSON object."]
+                validation_errors.append("Update parsing failed: expected a JSON object.")
                 continue
             error = self._validate_updated_snapshot(state_snapshot, updates)
             if error is None:
                 self._apply_state_updates(simulation_state, updates)
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(
             f"State update validation failed after {self.max_validation_retries + 1} attempts: {validation_errors[-1]}"
