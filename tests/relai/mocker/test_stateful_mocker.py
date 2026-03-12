@@ -128,7 +128,7 @@ def test_stateful_mocker_retries_on_output_validation_failure(mocker) -> None:
         "relai.mocker.stateful_mocker.Runner.run_sync",
         side_effect=[
             DummyResult(final_output={"not": "a string"}),
-            DummyResult(final_output="tool-output"),
+            DummyResult(final_output='"tool-output"'),
         ],
     )
 

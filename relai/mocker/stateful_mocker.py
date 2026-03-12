@@ -1,3 +1,4 @@
+import ast
 import json
 from functools import cached_property
 from typing import Any, ClassVar, Literal
@@ -122,6 +123,10 @@ class StatefulMocker(BaseMocker):
 
     @cached_property
     def update_agent(self) -> Agent:
+        output_type = None
+        if self.state_model is not None:
+            output_type = AgentOutputSchema(self.state_model, strict_json_schema=False)
+
         extra_args = dict(self.extra_model_args or {})
         if self.reasoning_effort is not None:
             extra_args["reasoning_effort"] = self.reasoning_effort
@@ -134,6 +139,7 @@ class StatefulMocker(BaseMocker):
                 state_fields=", ".join(self.state_fields),
             ),
             model=self.model,
+            output_type=output_type,
             model_settings=ModelSettings(extra_args=extra_args),
         )
 
@@ -169,23 +175,26 @@ class StatefulMocker(BaseMocker):
                 return exc.message
         return None
 
-    def _parse_state_updates(self, raw_output: Any) -> dict[str, Any] | None:
+    def _parse(self, raw_output: Any) -> dict[str, Any] | str:
         if isinstance(raw_output, dict):
             return raw_output
         text = str(raw_output).strip()
         if not text:
-            return None
+            raise ValueError("Decoding failed: output is empty.")
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            start = text.find("{")
-            end = text.rfind("}")
-            if start == -1 or end == -1 or end <= start:
-                return None
             try:
-                return json.loads(text[start : end + 1])
-            except json.JSONDecodeError:
-                return None
+                return ast.literal_eval(text)
+            except:
+                start = text.find("{")
+                end = text.rfind("}")
+                if start == -1 or end == -1 or end <= start:
+                    raise ValueError("Decoding failed; no JSON object found.")
+                try:
+                    return ast.literal_eval(text[start : end + 1])
+                except:
+                    raise ValueError("Decoding failed: invalid JSON.")
 
     def _apply_state_updates(self, simulation_state: dict[str, Any], updates: dict[str, Any]) -> None:
         for field in self.state_fields:
@@ -230,11 +239,18 @@ class StatefulMocker(BaseMocker):
                     result = Runner.run_sync(self.agent, agent_input, session=self._session)
                 else:
                     raise RuntimeError("Async path should call _arun_with_validation.")
-            output = result.final_output
+            if self.output_schema is None:
+                output = result.final_output
+            else:
+                try:
+                    output = self._parse(result.final_output)
+                except ValueError as exc:
+                    validation_errors.append(str(exc))
+                    continue
             error = self._validate_output(output)
             if error is None:
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(f"Output validation failed after {attempts} attempts: {validation_errors[-1]}")
 
@@ -259,11 +275,18 @@ class StatefulMocker(BaseMocker):
             )
             with no_trace():
                 result = await Runner.run(self.agent, agent_input, session=self._session)
-            output = result.final_output
+            if self.output_schema is None:
+                output = result.final_output
+            else:
+                try:
+                    output = self._parse(result.final_output)
+                except ValueError as exc:
+                    validation_errors.append(str(exc))
+                    continue
             error = self._validate_output(output)
             if error is None:
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(f"Output validation failed after {attempts} attempts: {validation_errors[-1]}")
 
@@ -290,15 +313,19 @@ class StatefulMocker(BaseMocker):
                     update_input,
                     session=self._update_session,
                 )
-            updates = self._parse_state_updates(update_result.final_output)
+            try:
+                updates = self._parse(update_result.final_output)
+            except ValueError as exc:
+                validation_errors.append(str(exc))
+                continue
             if not isinstance(updates, dict):
-                validation_errors = ["Update parsing failed: expected a JSON object."]
+                validation_errors.append("Update parsing failed: expected a JSON object.")
                 continue
             error = self._validate_updated_snapshot(state_snapshot, updates)
             if error is None:
                 self._apply_state_updates(simulation_state, updates)
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(
             f"State update validation failed after {self.max_validation_retries + 1} attempts: {validation_errors[-1]}"
@@ -327,15 +354,19 @@ class StatefulMocker(BaseMocker):
                     update_input,
                     session=self._update_session,
                 )
-            updates = self._parse_state_updates(update_result.final_output)
+            try:
+                updates = self._parse(update_result.final_output)
+            except ValueError as exc:
+                validation_errors.append(str(exc))
+                continue
             if not isinstance(updates, dict):
-                validation_errors = ["Update parsing failed: expected a JSON object."]
+                validation_errors.append("Update parsing failed: expected a JSON object.")
                 continue
             error = self._validate_updated_snapshot(state_snapshot, updates)
             if error is None:
                 self._apply_state_updates(simulation_state, updates)
                 return output
-            validation_errors = [error]
+            validation_errors.append(error)
 
         raise ValueError(
             f"State update validation failed after {self.max_validation_retries + 1} attempts: {validation_errors[-1]}"

@@ -244,6 +244,7 @@ class Maestro:
         self,
         batch_size: int,
         sampler: ProportionalSampler,
+        config_context: str | None = None,
         verbose: bool = True,
         group_id: str | None = None,
         pbar: tqdm | None = None,
@@ -262,6 +263,9 @@ class Maestro:
                 i.e. `critico`, where `batch_size` of them will be used to propose changes and the other
                 `batch_size` of them will be used for preliminary examinations.
             sampler (ProportionalSampler): Sampler to use for selecting setups.
+            config_context (str, optional): Additional context or information about the configs/parameters to assist
+                in the optimization process, such as the role of different parameters or the specific formats/features
+                supported. This can be especially helpful for optimizing parameters with customized formats.
             verbose (bool): If True, additional information will be printed during the iterate step.
                 Defaults to True.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
@@ -310,7 +314,9 @@ class Maestro:
                 "params": get_current_params().export(),
                 "serialized_past_proposals": self._serialize_past_proposals(),
                 "test_cases": test_cases[:batch_size],
-                "goal": self.goal,
+                "goal": self.goal
+                if config_context is None
+                else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
                 "param_graph": get_current_param_graph().export(),
             }
         )
@@ -385,7 +391,9 @@ class Maestro:
                 "holdout_test_cases": test_cases_updated[batch_size:],
                 "previous_score": previous_score,
                 "new_score": new_score,
-                "goal": self.goal,
+                "goal": self.goal
+                if config_context is None
+                else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
                 "analysis": analysis,
             }
         )
@@ -415,6 +423,7 @@ class Maestro:
         batch_size: int = 8,
         explore_radius: int = 5,
         explore_factor: float = 0.5,
+        config_context: str | None = None,
         group_id: str | None = None,
         verbose: bool = True,
         agent_version_uuid: str | None = None,
@@ -433,9 +442,12 @@ class Maestro:
                 A higher `explore_factor` allocates more rollouts to discover new configs,
                 while a lower value allocates more rollouts to ensure the discovered configs are thoroughly evaluated.
                 Defaults to 0.5.
+            config_context (str, optional): Additional context or information about the configs/parameters to assist
+                in the optimization process, such as the role of different parameters or the specific formats/features
+                supported. This can be especially helpful for optimizing parameters with customized formats.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
-            verbose (bool): If True, related information will be printed during the optimization step.
+            verbose (bool, optional): If True, related information will be printed during the optimization step.
                 Defaults to True.
             agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
             environment_uuid (str, optional): An optional environment UUID to associate with the runs.
@@ -692,7 +704,7 @@ class Maestro:
                 when the code is in json or certain domain-specific languages/formats.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
-            verbose (bool): If True, additional information will be printed during the optimization.
+            verbose (bool, optional): If True, additional information will be printed during the optimization.
                 Defaults to True.
             agent_version_uuid (str, optional): An optional agent version UUID to associate with the runs.
             environment_uuid (str, optional): An optional environment UUID to associate with the runs.
