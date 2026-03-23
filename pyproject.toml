@@ -55,4 +55,14 @@ dev = [
     "pytest-mock>=3.15.0",
     "responses>=0.25.7",
     "ruff>=0.11.11",
+    "ty>=0.0.24",
 ]
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["IPython"]
+
+[[tool.ty.overrides]]
+include = ["notebooks/**"]
+
+[tool.ty.overrides.rules]
+all = "ignore"

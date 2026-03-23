@@ -4,7 +4,7 @@ import random
 import time
 import uuid
 from functools import wraps
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, cast
 
 from ..flags import get_current_tracking
 from ..logger import Logger, get_current_logger, span_id_var
@@ -96,11 +96,13 @@ def get_full_func_name(func: Callable) -> str:
         str: A single string contains the full name.
     """
     if inspect.ismethod(func):
-        module = func.__func__.__module__
-        qualname = func.__func__.__qualname__
+        method = cast(Any, func.__func__)
+        module = method.__module__
+        qualname = method.__qualname__
     elif inspect.isfunction(func):
-        module = func.__module__
-        qualname = func.__qualname__
+        function = cast(Any, func)
+        module = function.__module__
+        qualname = function.__qualname__
     elif callable(func):
         # Callable object -> just use its class
         cls = func.__class__

@@ -313,7 +313,7 @@ class RELAIAnnotationBenchmark(RELAIBenchmark):
                 except (ValueError, SyntaxError):
                     return value
 
-        def liked_transform(value: bool) -> Literal["like", "dislike"]:
+        def liked_transform(value: bool | None) -> Literal["like", "dislike", "not provided"]:
             if value is None:
                 return "not provided"
             return "like" if value else "dislike"

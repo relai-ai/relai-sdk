@@ -93,15 +93,16 @@ def simulated(
     Decorator to mark a function to be simulated using a mocker in simulation mode. All such functions must have a
     corresponding mocker set in the simulation configuration. Supports both synchronous and asynchronous functions.
     """
-    func_name = f"{func.__module__}.{func.__qualname__}"
+    callable_obj = cast(Any, func)
+    func_name = f"{callable_obj.__module__}.{callable_obj.__qualname__}"
     _mocked_funcs.add(func_name)
 
-    func_doc = inspect.getdoc(func)
-    mod_globals = sys.modules[func.__module__].__dict__
+    func_doc = inspect.getdoc(callable_obj)
+    mod_globals = sys.modules[callable_obj.__module__].__dict__
     try:
-        type_hints = get_type_hints(func, globalns=mod_globals)
+        type_hints = get_type_hints(callable_obj, globalns=mod_globals)
     except Exception:
-        type_hints = dict(func.__annotations__)
+        type_hints = dict(callable_obj.__annotations__)
     output_type = cast(type, type_hints.get("return", None))
 
     @functools.wraps(func)

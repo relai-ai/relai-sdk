@@ -116,10 +116,10 @@ class Evaluator(ABC):
         """
         transformed_agent_log = replace(agent_log, agent_outputs=self.transform(agent_log.agent_outputs))
         self._check_fields(transformed_agent_log)
-        if inspect.iscoroutinefunction(self.compute_evaluator_result):
-            return await self.compute_evaluator_result(transformed_agent_log)
-        else:
-            return self.compute_evaluator_result(transformed_agent_log)  # pyright: ignore[reportReturnType]
+        result = self.compute_evaluator_result(transformed_agent_log)
+        if inspect.isawaitable(result):
+            return await result
+        return result
 
     @cached_property
     def uid(self) -> str:
@@ -556,8 +556,7 @@ class RELAIRubricBasedEvaluator(RELAIEvaluator):
         """
         criteria = {
             "criteria": [
-                {"description": k, "points": v}
-                for k, v in agent_log.simulation_tape.extras["rubrics"].items()  # type: ignore
+                {"description": k, "points": v} for k, v in agent_log.simulation_tape.extras["rubrics"].items()
             ]
         }
         serialized_rubrics = json.dumps(criteria)

@@ -45,7 +45,7 @@ async def chat_agent(messages: list[dict]):
         model=params.model,
         system_prompt=params.prompt,
     )
-    response = agent.invoke({"messages": messages})  # type: ignore
+    response = agent.invoke({"messages": messages})
     # If also using openinference instrumentor for automatic tracing,
     # use `no_trace` to avoid double tracing with customized logging as follows:
     # with no_trace():
