@@ -10,6 +10,7 @@ from agents.apply_diff import apply_diff
 from tqdm.auto import tqdm
 
 from relai import AsyncRELAI
+from relai._client import is_context_length_exceeded_error
 from relai.critico.critico import Critico, CriticoLog
 from relai.simulator import AgentLog, AsyncAgent, AsyncSimulator
 from relai.utils import no_trace
@@ -18,6 +19,8 @@ from ..schema.visual import ConfigOptVizSchema, ConfigSchema, GraphOptVizSchema,
 from .graph import get_current_param_graph
 from .params import get_current_params
 from .utils import ProportionalSampler, extract_code, get_full_func_name
+
+AgentLogCompressor = Callable[[AgentLog], AgentLog]
 
 
 class Maestro:
@@ -161,6 +164,70 @@ class Maestro:
         else:
             return str(agent_outputs)
 
+    def _compress_test_case(
+        self, test_case: dict[str, Any], agent_log: AgentLog, agent_log_compressor: AgentLogCompressor
+    ) -> dict[str, Any]:
+        compressed_log = agent_log_compressor(agent_log)
+        return {
+            "input": str(compressed_log.simulation_tape.agent_inputs),
+            "log": compressed_log.simulation_tape.extras["relai_log"],
+            "trace_id": compressed_log.trace_id,
+            "output": self._serialize_agent_outputs(compressed_log.agent_outputs),
+            "eval_score": test_case["eval_score"],
+            "eval_feedback": test_case["eval_feedback"],
+        }
+
+    def _compress_test_cases(
+        self,
+        test_cases: list[dict[str, Any]],
+        agent_logs: list[AgentLog],
+        agent_log_compressor: AgentLogCompressor,
+    ) -> list[dict[str, Any]]:
+        return [
+            self._compress_test_case(test_case, agent_log, agent_log_compressor)
+            for test_case, agent_log in zip(test_cases, agent_logs)
+        ]
+
+    def _compress_review_test_cases(
+        self,
+        test_cases_updated: list[dict[str, Any]],
+        agent_logs: list[AgentLog],
+        agent_logs_updated: list[AgentLog],
+        agent_log_compressor: AgentLogCompressor,
+    ) -> list[dict[str, Any]]:
+        compressed_test_cases_updated = []
+        for test_case_updated, agent_log, agent_log_updated in zip(test_cases_updated, agent_logs, agent_logs_updated):
+            compressed_previous = self._compress_test_case(test_case_updated, agent_log, agent_log_compressor)
+            compressed_current = self._compress_test_case(test_case_updated, agent_log_updated, agent_log_compressor)
+            compressed_current["previous_log"] = compressed_previous["log"]
+            compressed_current["previous_output"] = compressed_previous["output"]
+            compressed_current["previous_eval_score"] = test_case_updated["previous_eval_score"]
+            compressed_current["previous_eval_feedback"] = test_case_updated["previous_eval_feedback"]
+            compressed_test_cases_updated.append(compressed_current)
+        return compressed_test_cases_updated
+
+    async def _run_with_compression_fallback(
+        self,
+        compress_mode: bool,
+        agent_log_compressor: AgentLogCompressor | None,
+        regular_call: Callable[[], Awaitable[Any]],
+        compressed_call: Callable[[], Awaitable[Any]],
+    ) -> tuple[Any, bool]:
+        if compress_mode:
+            return await compressed_call(), True
+
+        try:
+            return await regular_call(), False
+        except Exception as e:
+            if agent_log_compressor is None or not is_context_length_exceeded_error(e):
+                raise e
+            return await compressed_call(), True
+
+    def _require_agent_log_compressor(self, agent_log_compressor: AgentLogCompressor | None) -> AgentLogCompressor:
+        if agent_log_compressor is None:
+            raise ValueError("`agent_log_compressor` is required for compressed execution.")
+        return agent_log_compressor
+
     async def _evaluate(
         self, awaitables: list[Awaitable], criticos: list[Critico], verbose: bool = True, print_flag: str = ""
     ) -> tuple[list[dict[str, Any]], list[AgentLog]]:
@@ -245,6 +312,7 @@ class Maestro:
         batch_size: int,
         sampler: ProportionalSampler,
         config_context: str | None = None,
+        agent_log_compressor: AgentLogCompressor | None = None,
         verbose: bool = True,
         group_id: str | None = None,
         pbar: tqdm | None = None,
@@ -266,6 +334,9 @@ class Maestro:
             config_context (str, optional): Additional context or information about the configs/parameters to assist
                 in the optimization process, such as the role of different parameters or the specific formats/features
                 supported. This can be especially helpful for optimizing parameters with customized formats.
+            agent_log_compressor (Callable[[AgentLog], AgentLog], optional): A function that compresses the AgentLog
+                when it is too long to be congested. It takes an AgentLog as input and returns a compressed
+                AgentLog. This can be especially helpful for optimizing agents with long execution traces.
             verbose (bool): If True, additional information will be printed during the iterate step.
                 Defaults to True.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
@@ -309,16 +380,41 @@ class Maestro:
         if pbar is not None:
             pbar.update(len(test_cases))
 
-        analysis, proposed_values = await self._client.propose_values(
-            {
-                "params": get_current_params().export(),
-                "serialized_past_proposals": self._serialize_past_proposals(),
-                "test_cases": test_cases[:batch_size],
-                "goal": self.goal
-                if config_context is None
-                else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
-                "param_graph": get_current_param_graph().export(),
-            }
+        compress_mode = False
+
+        async def _propose_values_uncompressed():
+            return await self._client.propose_values(
+                {
+                    "params": get_current_params().export(),
+                    "serialized_past_proposals": self._serialize_past_proposals(),
+                    "test_cases": test_cases[:batch_size],
+                    "goal": self.goal
+                    if config_context is None
+                    else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
+                    "param_graph": get_current_param_graph().export(),
+                }
+            )
+
+        async def _propose_values_compressed():
+            compressor = self._require_agent_log_compressor(agent_log_compressor)
+            compressed_test_cases = self._compress_test_cases(test_cases, agent_logs, compressor)
+            return await self._client.propose_values(
+                {
+                    "params": get_current_params().export(),
+                    "serialized_past_proposals": self._serialize_past_proposals(),
+                    "test_cases": compressed_test_cases[:batch_size],
+                    "goal": self.goal
+                    if config_context is None
+                    else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
+                    "param_graph": get_current_param_graph().export(),
+                }
+            )
+
+        (analysis, proposed_values), compress_mode = await self._run_with_compression_fallback(
+            compress_mode=compress_mode,
+            agent_log_compressor=agent_log_compressor,
+            regular_call=_propose_values_uncompressed,
+            compressed_call=_propose_values_compressed,
         )
 
         changes = []
@@ -358,7 +454,7 @@ class Maestro:
             )
             new_criticos.append(critico)
 
-        test_cases_updated, _ = await self._evaluate(
+        test_cases_updated, agent_logs_updated = await self._evaluate(
             awaitables=new_awaitables, criticos=new_criticos, verbose=verbose, print_flag=" (changed)"
         )
 
@@ -382,20 +478,49 @@ class Maestro:
         previous_score = float(previous_score) / batch_size
         new_score = float(new_score) / batch_size
 
-        review_decision = await self._client.review_values(
-            {
-                "params": get_current_params().export(),
-                "serialized_past_proposals": self._serialize_past_proposals(),
-                "proposal": changes,
-                "test_cases": test_cases_updated[:batch_size],
-                "holdout_test_cases": test_cases_updated[batch_size:],
-                "previous_score": previous_score,
-                "new_score": new_score,
-                "goal": self.goal
-                if config_context is None
-                else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
-                "analysis": analysis,
-            }
+        async def _review_values_uncompressed():
+            return await self._client.review_values(
+                {
+                    "params": get_current_params().export(),
+                    "serialized_past_proposals": self._serialize_past_proposals(),
+                    "proposal": changes,
+                    "test_cases": test_cases_updated[:batch_size],
+                    "holdout_test_cases": test_cases_updated[batch_size:],
+                    "previous_score": previous_score,
+                    "new_score": new_score,
+                    "goal": self.goal
+                    if config_context is None
+                    else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
+                    "analysis": analysis,
+                }
+            )
+
+        async def _review_values_compressed():
+            compressor = self._require_agent_log_compressor(agent_log_compressor)
+            compressed_test_cases_updated = self._compress_review_test_cases(
+                test_cases_updated, agent_logs, agent_logs_updated, compressor
+            )
+            return await self._client.review_values(
+                {
+                    "params": get_current_params().export(),
+                    "serialized_past_proposals": self._serialize_past_proposals(),
+                    "proposal": changes,
+                    "test_cases": compressed_test_cases_updated[:batch_size],
+                    "holdout_test_cases": compressed_test_cases_updated[batch_size:],
+                    "previous_score": previous_score,
+                    "new_score": new_score,
+                    "goal": self.goal
+                    if config_context is None
+                    else f"{self.goal}\nAdditional context:\n<context>\n{config_context}\n</context>",
+                    "analysis": analysis,
+                }
+            )
+
+        review_decision, compress_mode = await self._run_with_compression_fallback(
+            compress_mode=compress_mode,
+            agent_log_compressor=agent_log_compressor,
+            regular_call=_review_values_uncompressed,
+            compressed_call=_review_values_compressed,
         )
 
         if review_decision["accepted"]:
@@ -424,6 +549,7 @@ class Maestro:
         explore_radius: int = 5,
         explore_factor: float = 0.5,
         config_context: str | None = None,
+        agent_log_compressor: AgentLogCompressor | None = None,
         group_id: str | None = None,
         verbose: bool = True,
         agent_version_uuid: str | None = None,
@@ -445,6 +571,9 @@ class Maestro:
             config_context (str, optional): Additional context or information about the configs/parameters to assist
                 in the optimization process, such as the role of different parameters or the specific formats/features
                 supported. This can be especially helpful for optimizing parameters with customized formats.
+            agent_log_compressor (Callable[[AgentLog], AgentLog], optional): A function that compresses the AgentLog
+                when it is too long to be congested. It takes an AgentLog as input and returns a compressed
+                AgentLog. This can be especially helpful for optimizing agents with long execution traces.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
             verbose (bool, optional): If True, related information will be printed during the optimization step.
@@ -518,6 +647,8 @@ class Maestro:
             for _ in range(iterate_steps):
                 changes_accepted = await self._iterate(
                     batch_size=group_size,
+                    config_context=config_context,
+                    agent_log_compressor=agent_log_compressor,
                     verbose=verbose,
                     sampler=sampler,
                     group_id=group_id,
@@ -674,6 +805,7 @@ class Maestro:
         code: Optional[str] = None,
         code_verifier: Optional[Callable[[str], tuple[bool, str]]] = None,
         code_context: Optional[str] = None,
+        agent_log_compressor: AgentLogCompressor | None = None,
         group_id: str | None = None,
         verbose: bool = True,
         agent_version_uuid: str | None = None,
@@ -702,6 +834,9 @@ class Maestro:
             code_context (str, optional): Additional context or information about the code to assist generating
                 code that passes the verification. This is especially useful when `code_verifier` is provided and
                 when the code is in json or certain domain-specific languages/formats.
+            agent_log_compressor (Callable[[AgentLog], AgentLog], optional): A function that compresses the AgentLog
+                when it is too long to be congested. It takes an AgentLog as input and returns a compressed
+                AgentLog. This can be especially helpful for optimizing agents with long execution traces.
             group_id (str, optional): An optional group ID to associate all runs together. If not provided,
                 a new UUID will be generated.
             verbose (bool, optional): If True, additional information will be printed during the optimization.
@@ -747,45 +882,99 @@ class Maestro:
             )
             criticos.append(critico)
 
-        test_cases, _ = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
+        test_cases, agent_logs = await self._evaluate(awaitables=awaitables, criticos=criticos, verbose=verbose)
+        compress_mode = False
 
         if batch_size < len(test_cases):
             print("Selecting and clustering samples for optimization...\n\n")
             active_tags = {}
 
-            for test_case in test_cases:
-                _, active_tags = await self._client.process_test_case(
-                    {
-                        "test_case": test_case,
-                        "active_tags": active_tags,
-                        "threshold": batch_size * 3,
-                        "agent_name": get_full_func_name(self.agent_fn),
-                        "agent_code": code,
-                        "structure_description": description,
-                        "params": get_current_params().export(),
-                        "goal": self.goal,
-                        "constrained": False,
-                    }
+            for test_case, agent_log in zip(test_cases, agent_logs):
+
+                async def _process_uncompressed():
+                    return await self._client.process_test_case(
+                        {
+                            "test_case": test_case,
+                            "active_tags": active_tags,
+                            "threshold": batch_size * 3,
+                            "agent_name": get_full_func_name(self.agent_fn),
+                            "agent_code": code,
+                            "structure_description": description,
+                            "params": get_current_params().export(),
+                            "goal": self.goal,
+                            "constrained": False,
+                        }
+                    )
+
+                async def _process_compressed():
+                    compressor = self._require_agent_log_compressor(agent_log_compressor)
+                    compressed_test_case = self._compress_test_case(test_case, agent_log, compressor)
+                    return await self._client.process_test_case(
+                        {
+                            "test_case": compressed_test_case,
+                            "active_tags": active_tags,
+                            "threshold": batch_size * 3,
+                            "agent_name": get_full_func_name(self.agent_fn),
+                            "agent_code": code,
+                            "structure_description": description,
+                            "params": get_current_params().export(),
+                            "goal": self.goal,
+                            "constrained": False,
+                        }
+                    )
+
+                (_, active_tags), compress_mode = await self._run_with_compression_fallback(
+                    compress_mode=compress_mode,
+                    agent_log_compressor=agent_log_compressor,
+                    regular_call=_process_uncompressed,
+                    compressed_call=_process_compressed,
                 )
 
             for tag in active_tags:
                 active_tags[tag] = 0
 
             tags_per_test_case = []
-            for test_case in test_cases:
-                tags, _ = await self._client.process_test_case(
-                    {
-                        "test_case": test_case,
-                        "active_tags": active_tags,
-                        "threshold": batch_size * 3,
-                        "agent_name": get_full_func_name(self.agent_fn),
-                        "agent_code": code,
-                        "structure_description": description,
-                        "params": get_current_params().export(),
-                        "goal": self.goal,
-                        "constrained": True,
-                    }
+            for test_case, agent_log in zip(test_cases, agent_logs):
+
+                async def _tag_uncompressed():
+                    return await self._client.process_test_case(
+                        {
+                            "test_case": test_case,
+                            "active_tags": active_tags,
+                            "threshold": batch_size * 3,
+                            "agent_name": get_full_func_name(self.agent_fn),
+                            "agent_code": code,
+                            "structure_description": description,
+                            "params": get_current_params().export(),
+                            "goal": self.goal,
+                            "constrained": True,
+                        }
+                    )
+
+                async def _tag_compressed():
+                    compressor = self._require_agent_log_compressor(agent_log_compressor)
+                    compressed_test_case = self._compress_test_case(test_case, agent_log, compressor)
+                    return await self._client.process_test_case(
+                        {
+                            "test_case": compressed_test_case,
+                            "active_tags": active_tags,
+                            "threshold": batch_size * 3,
+                            "agent_name": get_full_func_name(self.agent_fn),
+                            "agent_code": code,
+                            "structure_description": description,
+                            "params": get_current_params().export(),
+                            "goal": self.goal,
+                            "constrained": True,
+                        }
+                    )
+
+                (tags, _), compress_mode = await self._run_with_compression_fallback(
+                    compress_mode=compress_mode,
+                    agent_log_compressor=agent_log_compressor,
+                    regular_call=_tag_uncompressed,
+                    compressed_call=_tag_compressed,
                 )
+
                 tags_per_test_case.append(tags)
                 for tag in tags:
                     if tag in active_tags:
@@ -799,24 +988,53 @@ class Maestro:
                 to_sort.append((score, idx))
             to_sort.sort(reverse=True)
             selected_test_cases = [test_cases[idx] for score, idx in to_sort[:batch_size]]
+            selected_agent_logs = [agent_logs[idx] for score, idx in to_sort[:batch_size]]
         else:
             selected_test_cases = test_cases
+            selected_agent_logs = agent_logs
 
         print("=" * 80)
         print("Optimizing structure...\n\n")
-        suggestion = await self._client.optimize_structure(
-            {
-                "agent_name": get_full_func_name(self.agent_fn),
-                "agent_code": code
-                if code_context is None
-                else (f"{code}\nAdditional context about the code:\n<context>\n{code_context}\n</context>"),
-                "structure_description": description,
-                "params": get_current_params().export(),
-                "serialized_past_proposals": self._serialize_past_proposals(),
-                "test_cases": selected_test_cases,
-                "goal": self.goal,
-                "max_correction_rounds": 1,
-            }
+
+        async def _optimize_structure_uncompressed():
+            return await self._client.optimize_structure(
+                {
+                    "agent_name": get_full_func_name(self.agent_fn),
+                    "agent_code": code
+                    if code_context is None
+                    else (f"{code}\nAdditional context about the code:\n<context>\n{code_context}\n</context>"),
+                    "structure_description": description,
+                    "params": get_current_params().export(),
+                    "serialized_past_proposals": self._serialize_past_proposals(),
+                    "test_cases": selected_test_cases,
+                    "goal": self.goal,
+                    "max_correction_rounds": 1,
+                }
+            )
+
+        async def _optimize_structure_compressed():
+            compressor = self._require_agent_log_compressor(agent_log_compressor)
+            compressed_test_cases = self._compress_test_cases(selected_test_cases, selected_agent_logs, compressor)
+            return await self._client.optimize_structure(
+                {
+                    "agent_name": get_full_func_name(self.agent_fn),
+                    "agent_code": code
+                    if code_context is None
+                    else (f"{code}\nAdditional context about the code:\n<context>\n{code_context}\n</context>"),
+                    "structure_description": description,
+                    "params": get_current_params().export(),
+                    "serialized_past_proposals": self._serialize_past_proposals(),
+                    "test_cases": compressed_test_cases,
+                    "goal": self.goal,
+                    "max_correction_rounds": 1,
+                }
+            )
+
+        suggestion, compress_mode = await self._run_with_compression_fallback(
+            compress_mode=compress_mode,
+            agent_log_compressor=agent_log_compressor,
+            regular_call=_optimize_structure_uncompressed,
+            compressed_call=_optimize_structure_compressed,
         )
 
         if (code is not None) and (code_verifier is not None):
