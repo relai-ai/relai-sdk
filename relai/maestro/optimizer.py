@@ -890,6 +890,7 @@ class Maestro:
             active_tags = {}
 
             for test_case, agent_log in zip(test_cases, agent_logs):
+
                 async def _process_uncompressed():
                     return await self._client.process_test_case(
                         {
@@ -934,6 +935,7 @@ class Maestro:
 
             tags_per_test_case = []
             for test_case, agent_log in zip(test_cases, agent_logs):
+
                 async def _tag_uncompressed():
                     return await self._client.process_test_case(
                         {
@@ -993,6 +995,7 @@ class Maestro:
 
         print("=" * 80)
         print("Optimizing structure...\n\n")
+
         async def _optimize_structure_uncompressed():
             return await self._client.optimize_structure(
                 {
@@ -1011,9 +1014,7 @@ class Maestro:
 
         async def _optimize_structure_compressed():
             compressor = self._require_agent_log_compressor(agent_log_compressor)
-            compressed_test_cases = self._compress_test_cases(
-                selected_test_cases, selected_agent_logs, compressor
-            )
+            compressed_test_cases = self._compress_test_cases(selected_test_cases, selected_agent_logs, compressor)
             return await self._client.optimize_structure(
                 {
                     "agent_name": get_full_func_name(self.agent_fn),
