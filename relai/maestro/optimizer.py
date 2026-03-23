@@ -20,6 +20,8 @@ from .graph import get_current_param_graph
 from .params import get_current_params
 from .utils import ProportionalSampler, extract_code, get_full_func_name
 
+AgentLogCompressor = Callable[[AgentLog], AgentLog]
+
 
 class Maestro:
     """
@@ -162,7 +164,9 @@ class Maestro:
         else:
             return str(agent_outputs)
 
-    def _compress_test_case(self, test_case: dict[str, Any], agent_log: AgentLog, agent_log_compressor) -> dict[str, Any]:
+    def _compress_test_case(
+        self, test_case: dict[str, Any], agent_log: AgentLog, agent_log_compressor: AgentLogCompressor
+    ) -> dict[str, Any]:
         compressed_log = agent_log_compressor(agent_log)
         return {
             "input": str(compressed_log.simulation_tape.agent_inputs),
@@ -174,7 +178,10 @@ class Maestro:
         }
 
     def _compress_test_cases(
-        self, test_cases: list[dict[str, Any]], agent_logs: list[AgentLog], agent_log_compressor
+        self,
+        test_cases: list[dict[str, Any]],
+        agent_logs: list[AgentLog],
+        agent_log_compressor: AgentLogCompressor,
     ) -> list[dict[str, Any]]:
         return [
             self._compress_test_case(test_case, agent_log, agent_log_compressor)
@@ -186,7 +193,7 @@ class Maestro:
         test_cases_updated: list[dict[str, Any]],
         agent_logs: list[AgentLog],
         agent_logs_updated: list[AgentLog],
-        agent_log_compressor,
+        agent_log_compressor: AgentLogCompressor,
     ) -> list[dict[str, Any]]:
         compressed_test_cases_updated = []
         for test_case_updated, agent_log, agent_log_updated in zip(test_cases_updated, agent_logs, agent_logs_updated):
@@ -202,7 +209,7 @@ class Maestro:
     async def _run_with_compression_fallback(
         self,
         compress_mode: bool,
-        agent_log_compressor,
+        agent_log_compressor: AgentLogCompressor | None,
         regular_call: Callable[[], Awaitable[Any]],
         compressed_call: Callable[[], Awaitable[Any]],
     ) -> tuple[Any, bool]:
@@ -215,6 +222,11 @@ class Maestro:
             if agent_log_compressor is None or not is_context_length_exceeded_error(e):
                 raise e
             return await compressed_call(), True
+
+    def _require_agent_log_compressor(self, agent_log_compressor: AgentLogCompressor | None) -> AgentLogCompressor:
+        if agent_log_compressor is None:
+            raise ValueError("`agent_log_compressor` is required for compressed execution.")
+        return agent_log_compressor
 
     async def _evaluate(
         self, awaitables: list[Awaitable], criticos: list[Critico], verbose: bool = True, print_flag: str = ""
@@ -300,7 +312,7 @@ class Maestro:
         batch_size: int,
         sampler: ProportionalSampler,
         config_context: str | None = None,
-        agent_log_compressor: Optional[Callable[[AgentLog], Any]] = None,
+        agent_log_compressor: AgentLogCompressor | None = None,
         verbose: bool = True,
         group_id: str | None = None,
         pbar: tqdm | None = None,
@@ -384,7 +396,8 @@ class Maestro:
             )
 
         async def _propose_values_compressed():
-            compressed_test_cases = self._compress_test_cases(test_cases, agent_logs, agent_log_compressor)
+            compressor = self._require_agent_log_compressor(agent_log_compressor)
+            compressed_test_cases = self._compress_test_cases(test_cases, agent_logs, compressor)
             return await self._client.propose_values(
                 {
                     "params": get_current_params().export(),
@@ -483,8 +496,9 @@ class Maestro:
             )
 
         async def _review_values_compressed():
+            compressor = self._require_agent_log_compressor(agent_log_compressor)
             compressed_test_cases_updated = self._compress_review_test_cases(
-                test_cases_updated, agent_logs, agent_logs_updated, agent_log_compressor
+                test_cases_updated, agent_logs, agent_logs_updated, compressor
             )
             return await self._client.review_values(
                 {
@@ -535,7 +549,7 @@ class Maestro:
         explore_radius: int = 5,
         explore_factor: float = 0.5,
         config_context: str | None = None,
-        agent_log_compressor: Optional[Callable[[AgentLog], Any]] = None,
+        agent_log_compressor: AgentLogCompressor | None = None,
         group_id: str | None = None,
         verbose: bool = True,
         agent_version_uuid: str | None = None,
@@ -791,7 +805,7 @@ class Maestro:
         code: Optional[str] = None,
         code_verifier: Optional[Callable[[str], tuple[bool, str]]] = None,
         code_context: Optional[str] = None,
-        agent_log_compressor: Optional[Callable[[AgentLog], AgentLog]] = None,
+        agent_log_compressor: AgentLogCompressor | None = None,
         group_id: str | None = None,
         verbose: bool = True,
         agent_version_uuid: str | None = None,
@@ -892,7 +906,8 @@ class Maestro:
                     )
 
                 async def _process_compressed():
-                    compressed_test_case = self._compress_test_case(test_case, agent_log, agent_log_compressor)
+                    compressor = self._require_agent_log_compressor(agent_log_compressor)
+                    compressed_test_case = self._compress_test_case(test_case, agent_log, compressor)
                     return await self._client.process_test_case(
                         {
                             "test_case": compressed_test_case,
@@ -935,7 +950,8 @@ class Maestro:
                     )
 
                 async def _tag_compressed():
-                    compressed_test_case = self._compress_test_case(test_case, agent_log, agent_log_compressor)
+                    compressor = self._require_agent_log_compressor(agent_log_compressor)
+                    compressed_test_case = self._compress_test_case(test_case, agent_log, compressor)
                     return await self._client.process_test_case(
                         {
                             "test_case": compressed_test_case,
@@ -994,8 +1010,9 @@ class Maestro:
             )
 
         async def _optimize_structure_compressed():
+            compressor = self._require_agent_log_compressor(agent_log_compressor)
             compressed_test_cases = self._compress_test_cases(
-                selected_test_cases, selected_agent_logs, agent_log_compressor
+                selected_test_cases, selected_agent_logs, compressor
             )
             return await self._client.optimize_structure(
                 {
