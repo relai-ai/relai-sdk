@@ -3111,6 +3111,7 @@ dependencies = [
     { name = "openinference-instrumentation" },
     { name = "opentelemetry-instrumentation" },
     { name = "pydantic" },
+    { name = "tenacity" },
 ]
 
 [package.dev-dependencies]
@@ -3142,6 +3143,7 @@ requires-dist = [
     { name = "openinference-instrumentation", specifier = ">=0.1.38" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.58b0" },
     { name = "pydantic", specifier = ">=2.11.5" },
+    { name = "tenacity", specifier = ">=9.1.2" },
 ]
 
 [package.metadata.requires-dev]

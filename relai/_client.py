@@ -7,9 +7,14 @@ from typing import Any, Literal, Optional
 
 import aiohttp
 import httpx
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from ._exceptions import RELAIError
 from .schema.visual import ConfigOptVizSchema, GraphOptVizSchema
+
+
+def retry_if_not_context_length_exceeded(exception: BaseException) -> bool:
+    return "context length exceeded" not in str(exception).lower()
 
 
 class BaseRELAI(ABC):
@@ -78,6 +83,12 @@ class RELAI(BaseRELAI):
     def __exit__(self, exc_type, exc_value, traceback):
         self.client.close()
 
+    @retry(
+        wait=wait_exponential(multiplier=1, max=30),
+        stop=stop_after_attempt(5),
+        retry=retry_if_exception(retry_if_not_context_length_exceeded),
+        reraise=True,
+    )
     def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Performs an HTTP request and handles common errors."""
         try:
@@ -514,6 +525,12 @@ class AsyncRELAI(BaseRELAI):
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
+    @retry(
+        wait=wait_exponential(multiplier=1, max=30),
+        stop=stop_after_attempt(5),
+        retry=retry_if_exception(retry_if_not_context_length_exceeded),
+        reraise=True,
+    )
     async def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Performs an HTTP request and handles common errors."""
         try:

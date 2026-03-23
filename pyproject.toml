@@ -29,6 +29,7 @@ dependencies = [
     "openai-agents[litellm]>=0.6.2",
     "opentelemetry-instrumentation>=0.58b0",
     "openinference-instrumentation>=0.1.38",
+    "tenacity>=9.1.2",
 ]
 version = "0.3.28"
 
