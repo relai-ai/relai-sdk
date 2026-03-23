@@ -25,8 +25,8 @@ def is_context_length_exceeded_error(exception: BaseException) -> bool:
             return cause.response.status_code == 413 and response.get("detail") == "Context Length Exceeded"
         if isinstance(cause, aiohttp.ClientResponseError):
             status_marker = "HTTP error occurred: 413"
-            detail_marker = '"detail": "Context Length Exceeded"'
-            return status_marker in str(exception) and detail_marker in str(exception)
+            context_length_exceeded_detail = "Context Length Exceeded"
+            return status_marker in str(exception) and context_length_exceeded_detail in str(exception)
 
         message = str(exception)
         if "HTTP error occurred: 413" not in message:
