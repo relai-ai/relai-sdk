@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from relai import AsyncRELAI, RELAI
+from relai import RELAI, AsyncRELAI
 from relai._exceptions import ContextLengthExceededError
 
 
