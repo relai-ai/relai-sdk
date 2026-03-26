@@ -1,5 +1,5 @@
 from ._client import RELAI, AsyncRELAI
-from ._exceptions import RELAIError
+from ._exceptions import ContextLengthExceededError, RELAIError
 from .data import AgentInputs, AgentLog, AgentOutputs, CriticoLog, EvaluatorLog, RELAISample, SimulationTape
 from .simulator import (
     AsyncSimulator,
@@ -17,6 +17,7 @@ __all__ = [
     "AsyncRELAI",
     "AsyncSimulator",
     "CriticoLog",
+    "ContextLengthExceededError",
     "EvaluatorLog",
     "get_current_simulation_mode",
     "random_env_generator",

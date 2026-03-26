@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import os
 import time
@@ -8,44 +7,10 @@ from typing import Any, Literal, Optional
 
 import aiohttp
 import httpx
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential
 
-from ._exceptions import RELAIError
+from ._exceptions import ContextLengthExceededError, RELAIError
 from .schema.visual import ConfigOptVizSchema, GraphOptVizSchema
-
-
-def is_context_length_exceeded_error(exception: BaseException) -> bool:
-    if isinstance(exception, RELAIError):
-        cause = exception.__cause__
-        if isinstance(cause, httpx.HTTPStatusError):
-            try:
-                response = cause.response.json()
-            except ValueError:
-                return False
-            return cause.response.status_code == 413 and response.get("detail") == "Context Length Exceeded"
-        if isinstance(cause, aiohttp.ClientResponseError):
-            status_marker = "HTTP error occurred: 413"
-            context_length_exceeded_detail = "Context Length Exceeded"
-            return status_marker in str(exception) and context_length_exceeded_detail in str(exception)
-
-        message = str(exception)
-        if "HTTP error occurred: 413" not in message:
-            return False
-        try:
-            response_body = message.split("Response body:", maxsplit=1)[1].strip()
-        except IndexError:
-            return False
-        try:
-            response = json.loads(response_body)
-        except json.JSONDecodeError:
-            return False
-        return response.get("detail") == "Context Length Exceeded"
-
-    return False
-
-
-def retry_if_not_context_length_exceeded(exception: BaseException) -> bool:
-    return not is_context_length_exceeded_error(exception)
 
 
 class BaseRELAI(ABC):
@@ -117,7 +82,6 @@ class RELAI(BaseRELAI):
     @retry(
         wait=wait_exponential(multiplier=1, max=30),
         stop=stop_after_attempt(5),
-        retry=retry_if_exception(retry_if_not_context_length_exceeded),
         reraise=True,
     )
     def _request(self, method: str, url: str, **kwargs: Any) -> Any:
@@ -248,6 +212,8 @@ class RELAI(BaseRELAI):
             elif status == "SUCCESS":
                 return response["result"]
             else:
+                if response["result"].get("error") == "Context Length Exceeded":
+                    raise ContextLengthExceededError("Maestro task failed: Context Length Exceeded")
                 raise RELAIError(f"Maestro task failed: {status}")
 
     def process_test_case(self, data: dict) -> tuple[list[str], dict[str, int]]:
@@ -559,7 +525,6 @@ class AsyncRELAI(BaseRELAI):
     @retry(
         wait=wait_exponential(multiplier=1, max=30),
         stop=stop_after_attempt(5),
-        retry=retry_if_exception(retry_if_not_context_length_exceeded),
         reraise=True,
     )
     async def _request(self, method: str, url: str, **kwargs: Any) -> Any:
@@ -705,6 +670,8 @@ class AsyncRELAI(BaseRELAI):
             elif status == "SUCCESS":
                 return response["result"]
             else:
+                if response["result"].get("error") == "Context Length Exceeded":
+                    raise ContextLengthExceededError("Maestro task failed: Context Length Exceeded")
                 raise RELAIError(f"Maestro task failed: {status}")
 
     async def process_test_case(self, data: dict) -> tuple[list[str], dict[str, int]]:
