@@ -1,4 +1,5 @@
 import json
+from collections.abc import Sequence
 from collections import defaultdict
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -22,6 +23,26 @@ Tracer provider to be used for openinference instrumentation.
 """
 
 
+def _to_attribute_value(value: Any) -> AttributeValue | None:
+    if isinstance(value, Enum):
+        value = value.value
+
+    if isinstance(value, (str, bool, int, float)):
+        return value
+
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        if all(isinstance(item, str) for item in value):
+            return cast(Sequence[str], value)
+        if all(isinstance(item, bool) for item in value):
+            return cast(Sequence[bool], value)
+        if all(isinstance(item, int) and not isinstance(item, bool) for item in value):
+            return cast(Sequence[int], value)
+        if all(isinstance(item, float) for item in value):
+            return cast(Sequence[float], value)
+
+    return None
+
+
 def flatten(mapping: Mapping[str, Any]) -> Iterator[tuple[str, AttributeValue]]:
     for key, value in mapping.items():
         if value is None:
@@ -35,11 +56,13 @@ def flatten(mapping: Mapping[str, Any]) -> Iterator[tuple[str, AttributeValue]]:
                     for sub_key, sub_value in flatten(cast(Mapping[str, Any], sub_mapping)):
                         yield f"{key}.{index}.{sub_key}", sub_value
                 else:
-                    yield f"{key}.{index}", sub_mapping
+                    attribute_value = _to_attribute_value(sub_mapping)
+                    if attribute_value is not None:
+                        yield f"{key}.{index}", attribute_value
         else:
-            if isinstance(value, Enum):
-                value = value.value
-            yield key, value
+            attribute_value = _to_attribute_value(value)
+            if attribute_value is not None:
+                yield key, attribute_value
 
 
 def unflatten_attributes(flat: dict[str, Any], prefix: str = "") -> Union[dict[str, Any], list[Any], Any]:

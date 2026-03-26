@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import pytest
+from pydantic import BaseModel
 
 from relai.mocker.stateful_mocker import StatefulMocker
 
@@ -10,6 +11,10 @@ from relai.mocker.stateful_mocker import StatefulMocker
 @dataclass
 class DummyResult:
     final_output: object
+
+
+class DummyValidationModel(BaseModel):
+    pass
 
 
 @pytest.mark.unit
@@ -176,7 +181,7 @@ def test_stateful_mocker_rejects_conflicting_state_spec() -> None:
     with pytest.raises(ValueError, match="state_model or state_schema"):
         StatefulMocker(
             state_fields=["count"],
-            state_model=DummyResult,  # type: ignore[arg-type]
+            state_model=DummyValidationModel,
             state_schema={"type": "object"},
         )
 
@@ -186,6 +191,6 @@ def test_stateful_mocker_rejects_conflicting_output_spec() -> None:
     with pytest.raises(ValueError, match="output_model or output_schema"):
         StatefulMocker(
             state_fields=["count"],
-            output_model=DummyResult,  # type: ignore[arg-type]
+            output_model=DummyValidationModel,
             output_schema={"type": "string"},
         )
