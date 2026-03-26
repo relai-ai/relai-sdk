@@ -10,7 +10,7 @@ from agents.apply_diff import apply_diff
 from tqdm.auto import tqdm
 
 from relai import AsyncRELAI
-from relai._client import is_context_length_exceeded_error
+from relai._exceptions import ContextLengthExceededError
 from relai.critico.critico import Critico, CriticoLog
 from relai.simulator import AgentLog, AsyncAgent, AsyncSimulator
 from relai.utils import no_trace
@@ -219,7 +219,7 @@ class Maestro:
         try:
             return await regular_call(), False
         except Exception as e:
-            if agent_log_compressor is None or not is_context_length_exceeded_error(e):
+            if agent_log_compressor is None or not isinstance(e, ContextLengthExceededError):
                 raise e
             return await compressed_call(), True
 
