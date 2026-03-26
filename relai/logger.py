@@ -1,6 +1,6 @@
 import json
-from collections.abc import Sequence
 from collections import defaultdict
+from collections.abc import Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum
