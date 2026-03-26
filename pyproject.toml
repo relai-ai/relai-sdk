@@ -31,7 +31,7 @@ dependencies = [
     "openinference-instrumentation>=0.1.38",
     "tenacity>=9.1.2",
 ]
-version = "0.3.29"
+version = "0.3.30"
 
 [tool.setuptools.packages.find]
 where = ["."]
